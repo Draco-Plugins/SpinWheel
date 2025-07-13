@@ -1,0 +1,30 @@
+name: SpinWheel
+version: '1.31'
+main: sir_draco.spinwheel.SpinWheel
+api-version: '1.20'
+authors: [Sir_Draco]
+description: Allows the creation of an RNG spin wheel
+depend: [ Essentials ]
+softdepend: [ WorldGuard ]
+
+commands:
+  spin:
+    description: Tries to spin the wheel if possible
+    permission: wheel.default
+  spins:
+    description: Tells the player how many spins they have
+    permission: wheel.default
+  nextspin:
+    description: Allows the player to see the next spin
+    permission: wheel.default
+
+  spinwheel:
+    description: Allows various options in controlling the wheel
+    permission: wheel.admin
+    aliases: [ sw ]
+
+permissions:
+  wheel.admin:
+    description: Allows unlimited spins on the wheel
+  wheel.default:
+    description: Allows spin commands to be used

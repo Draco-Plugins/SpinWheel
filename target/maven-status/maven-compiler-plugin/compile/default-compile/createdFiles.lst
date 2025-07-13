@@ -1,0 +1,15 @@
+sir_draco\spinwheel\CustomFurnace.class
+sir_draco\spinwheel\Commands\SpinsCommand.class
+sir_draco\spinwheel\PlayerListener.class
+sir_draco\spinwheel\WheelStats.class
+sir_draco\spinwheel\Commands\NextSpinCommand.class
+sir_draco\spinwheel\Commands\SpinWheelCommand.class
+sir_draco\spinwheel\Commands\SpinCommand.class
+sir_draco\spinwheel\TimeTracker.class
+sir_draco\spinwheel\CustomFurnaceChecker.class
+sir_draco\spinwheel\SpinTimer.class
+sir_draco\spinwheel\Commands\SpinTabComplete.class
+sir_draco\spinwheel\Wheel.class
+sir_draco\spinwheel\PlayerListener$1.class
+sir_draco\spinwheel\SpinWheel.class
+sir_draco\spinwheel\SpinWheel$1.class
