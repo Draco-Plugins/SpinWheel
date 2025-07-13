@@ -1,0 +1,6 @@
+Version: ${project.version}
+# Seconds
+Time: 1800
+EndLoot: false
+# Location
+Wheel:
