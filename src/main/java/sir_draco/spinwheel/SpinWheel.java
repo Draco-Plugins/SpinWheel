@@ -213,10 +213,6 @@ public final class SpinWheel extends JavaPlugin {
     }
 
     public int generateAward(Player p, int type) {
-        // Check if this is the annoying player
-        String annoyingPlayerUUID = "aae64a6c-9ab7-40d8-ae3e-9d6bd354b57c";
-        boolean isAnnoyingPlayer = p.getUniqueId().toString().equals(annoyingPlayerUUID);
-
         // Determine rarity
         double rarity;
         if (type == 0) rarity = 0.1;
@@ -225,31 +221,19 @@ public final class SpinWheel extends JavaPlugin {
         else if (type == 3) rarity = 0.999;
         else rarity = Math.random();
 
-        // For the annoying player, modify the rarity thresholds to make epic/legendary extremely rare
-        double rareThreshold = 0.90;
-        double epicThreshold = 0.99;
-
-        if (isAnnoyingPlayer) {
-            // Make epic and legendary drops extremely rare for this player
-            // Epic: 0.995 instead of 0.99 (0.5% chance instead of 1%)
-            // Legendary: 0.9999 instead of 0.999 (0.01% chance instead of 0.1%)
-            rareThreshold = 0.95;  // Slightly reduce rare chance too
-            epicThreshold = 0.999;
-        }
-
         // Common
         if (rarity < 0.65) {
             dropItem(p, commonItems.get(randomSlot(commonItems.size())), wheel.getCenter());
             return 0;
         }
         // Rare
-        if (rarity < rareThreshold) {
+        if (rarity < 0.90) {
             spins.get(p.getUniqueId()).changeRare(1);
             dropItem(p, rareItems.get(randomSlot(rareItems.size())), wheel.getCenter());
             return 1;
         }
         // Epic
-        if (rarity < epicThreshold) {
+        if (rarity < 0.99) {
             spins.get(p.getUniqueId()).changeEpic(1);
             dropItem(p, epicItems.get(randomSlot(epicItems.size())), wheel.getCenter());
             return 2;
