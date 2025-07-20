@@ -24,11 +24,11 @@ public class NextSpinCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] strings) {
         if (!(sender instanceof Player p)) return false;
-        if (!plugin.getSpins().containsKey(p.getUniqueId())) {
+        if (!plugin.getSpinsStats().containsKey(p.getUniqueId())) {
             Bukkit.getLogger().warning("Player " + p.getName() + " does not have a spin tracker");
             return false;
         }
-        int time = plugin.getSpins().get(p.getUniqueId()).getTime();
+        int time = plugin.getSpinsStats().get(p.getUniqueId()).getTime();
         int totalTime = plugin.getEffectiveWaitTime(p.getUniqueId());
         int minutesLeft = (totalTime - time) / 60;
         int secondsLeft = (totalTime - time) % 60;

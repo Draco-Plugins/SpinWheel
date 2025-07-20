@@ -46,7 +46,7 @@ public class SpinWheelCommand implements CommandExecutor {
                     return false;
                 }
 
-                plugin.getSpins().get(target.getUniqueId()).changeSpins(amount);
+                plugin.getSpinsStats().get(target.getUniqueId()).changeSpins(amount);
                 target.sendRawMessage(ChatColor.GREEN + "You have just received " + ChatColor.AQUA + amount
                         + ChatColor.GREEN + " wheel spins");
                 target.playSound(target, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
@@ -184,7 +184,7 @@ public class SpinWheelCommand implements CommandExecutor {
                 return false;
             }
 
-            plugin.getSpins().get(target.getUniqueId()).changeSpins(amount);
+            plugin.getSpinsStats().get(target.getUniqueId()).changeSpins(amount);
             target.sendRawMessage(ChatColor.GREEN + "You have just received " + ChatColor.AQUA + amount
                     + ChatColor.GREEN + " wheel spins");
             target.playSound(target, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
@@ -222,10 +222,10 @@ public class SpinWheelCommand implements CommandExecutor {
                 return false;
             }
 
-            plugin.getSpins().get(target.getUniqueId()).setSpins(0);
-            plugin.getSpins().get(target.getUniqueId()).setRare(0);
-            plugin.getSpins().get(target.getUniqueId()).setEpic(0);
-            plugin.getSpins().get(target.getUniqueId()).setLegendary(0);
+            plugin.getSpinsStats().get(target.getUniqueId()).setSpins(0);
+            plugin.getSpinsStats().get(target.getUniqueId()).setRare(0);
+            plugin.getSpinsStats().get(target.getUniqueId()).setEpic(0);
+            plugin.getSpinsStats().get(target.getUniqueId()).setLegendary(0);
             target.sendRawMessage(ChatColor.GREEN + "Your wheel spin stats have been reset");
             target.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
             p.sendRawMessage(ChatColor.GREEN + "Successfully reset their stats");

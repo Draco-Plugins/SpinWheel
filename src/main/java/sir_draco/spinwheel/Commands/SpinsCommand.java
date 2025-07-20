@@ -30,11 +30,11 @@ public class SpinsCommand implements CommandExecutor {
                 p.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
                 return true;
             }
-            p.sendRawMessage(ChatColor.GREEN + player.getDisplayName() + " has " + ChatColor.AQUA + plugin.getSpins().get(player.getUniqueId()).getSpins() + ChatColor.GREEN + " spins");
+            p.sendRawMessage(ChatColor.GREEN + player.getDisplayName() + " has " + ChatColor.AQUA + plugin.getSpinsStats().get(player.getUniqueId()).getSpins() + ChatColor.GREEN + " spins");
             p.playSound(p, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
             return true;
         }
-        p.sendRawMessage(ChatColor.GREEN + "You have " + ChatColor.AQUA + plugin.getSpins().get(p.getUniqueId()).getSpins() + ChatColor.GREEN + " spins");
+        p.sendRawMessage(ChatColor.GREEN + "You have " + ChatColor.AQUA + plugin.getSpinsStats().get(p.getUniqueId()).getSpins() + ChatColor.GREEN + " spins");
         p.playSound(p, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
         return true;
     }

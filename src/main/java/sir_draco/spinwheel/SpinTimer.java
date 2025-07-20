@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class SpinTimer extends BukkitRunnable {
@@ -85,7 +86,7 @@ public class SpinTimer extends BukkitRunnable {
     }
 
     public void printResults(int common, int rare, int epic, int legendary) {
-        HashMap<UUID, WheelStats> spins = plugin.getSpins();
+        Map<UUID, WheelStats> spins = plugin.getSpinsStats();
         Wheel wheel = plugin.getWheel();
         if (legendary != 0) {
             String plural;

@@ -9,5 +9,8 @@
         <module name="SpinWheel" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="SpinWheel (1)" target="21" />
+    </bytecodeTargetLevel>
   </component>
 </project>

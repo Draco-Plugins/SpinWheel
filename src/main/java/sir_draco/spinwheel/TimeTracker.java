@@ -16,15 +16,15 @@ public class TimeTracker extends BukkitRunnable {
     @Override
     public void run() {
         for (Player p : plugin.getServer().getOnlinePlayers()) {
-            if (!plugin.getSpins().containsKey(p.getUniqueId())) continue;
+            if (!plugin.getSpinsStats().containsKey(p.getUniqueId())) continue;
             if (plugin.getEssentials().getUser(p).isAfk()) continue;
-            plugin.getSpins().get(p.getUniqueId()).increaseTime();
+            plugin.getSpinsStats().get(p.getUniqueId()).increaseTime();
 
             int effectiveTime = plugin.getEffectiveWaitTime(p.getUniqueId());
 
-            if (plugin.getSpins().get(p.getUniqueId()).getTime() >= effectiveTime) {
-                plugin.getSpins().get(p.getUniqueId()).setTime(0);
-                plugin.getSpins().get(p.getUniqueId()).changeSpins(1);
+            if (plugin.getSpinsStats().get(p.getUniqueId()).getTime() >= effectiveTime) {
+                plugin.getSpinsStats().get(p.getUniqueId()).setTime(0);
+                plugin.getSpinsStats().get(p.getUniqueId()).changeSpins(1);
                 int minutes = effectiveTime / 60;
                 p.sendRawMessage(ChatColor.GREEN + "You just received a wheel spin for " + ChatColor.AQUA +
                          minutes + " Minutes " + ChatColor.GREEN + "of active play time");

@@ -26,16 +26,26 @@ import sir_draco.spinwheel.Commands.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.logging.Level;
 
 @SuppressWarnings("deprecation")
 public final class SpinWheel extends JavaPlugin {
+    public static final String CONFIG_YML = "config.yml";
+    public static final String VERSION = "Version";
+    public static final String WHEEL_STRING = "Wheel";
+    public static final String SPINS = ".Spins";
+    public static final String TIME = ".Time";
+    public static final String RARE = ".Rare";
+    public static final String EPIC = ".Epic";
+    public static final String LEGENDARY = ".Legendary";
+    public static final Random RANDOM = new Random();
+    public static final String LOCATION = ".Location";
+    public static final String TYPE = ".Type";
+
     private static SpinWheel instance;
 
-    private final HashMap<UUID, WheelStats> spins = new HashMap<>();
+    private final HashMap<UUID, WheelStats> spinsStats = new HashMap<>();
     private final ArrayList<EntityType> entityTypes = new ArrayList<>();
     private final ArrayList<Player> opSpins = new ArrayList<>();
     private final ArrayList<CustomFurnace> customFurnaces = new ArrayList<>();
@@ -64,13 +74,13 @@ public final class SpinWheel extends JavaPlugin {
         instance = this;
         // Load config
         saveDefaultConfig();
-        File configFile = new File(getDataFolder(), "config.yml");
+        File configFile = new File(getDataFolder(), CONFIG_YML);
         FileConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-        if (config.get("Version") == null || config.getDouble("Version") != 1.31) {
+        if (config.get(VERSION) == null || config.getDouble(VERSION) != 1.31) {
             Bukkit.getLogger().info("Replacing Config");
-            saveResource("config.yml", true);
+            saveResource(CONFIG_YML, true);
         }
-        else Bukkit.getLogger().info("Version: " + getConfig().getDouble("Version"));
+        else Bukkit.getLogger().log(Level.INFO, "[SpinWheel] Version: {0}", getConfig().getDouble(VERSION));
 
         // Load player and furnace data
         dataFile = new File(getDataFolder(), "players.yml");
@@ -116,24 +126,24 @@ public final class SpinWheel extends JavaPlugin {
         try {
             saveSpins();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save spins", e);
+            Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Failed to save spins", e);
         }
 
         try {
             saveFurnaces();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save furnaces", e);
+            Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Failed to save furnaces", e);
         }
 
         instance = null;
     }
 
     public void loadWheel() {
-        if (getConfig().get("Wheel") == null) {
+        if (getConfig().get(WHEEL_STRING) == null) {
             Bukkit.getLogger().info("No wheel found");
             return;
         }
-        wheel = new Wheel(getConfig().getLocation("Wheel"));
+        wheel = new Wheel(getConfig().getLocation(WHEEL_STRING));
     }
 
     public void loadOnlinePlayers() {
@@ -151,28 +161,28 @@ public final class SpinWheel extends JavaPlugin {
 
         if (!success) {
             WheelStats stats = new WheelStats(0, 0, 0, 0, 0);
-            spins.put(p.getUniqueId(), stats);
+            spinsStats.put(p.getUniqueId(), stats);
             return;
         }
 
         UUID uuid = p.getUniqueId();
-        int spinAmount = playerData.getInt(uuid + ".Spins");
-        int time = playerData.getInt(uuid + ".Time");
-        int rare = playerData.getInt(uuid + ".Rare");
-        int epic = playerData.getInt(uuid + ".Epic");
-        int legendary = playerData.getInt(uuid + ".Legendary");
-        spins.put(uuid, new WheelStats(spinAmount, time, rare, epic, legendary));
+        int spinAmount = playerData.getInt(uuid + SPINS);
+        int time = playerData.getInt(uuid + TIME);
+        int rare = playerData.getInt(uuid + RARE);
+        int epic = playerData.getInt(uuid + EPIC);
+        int legendary = playerData.getInt(uuid + LEGENDARY);
+        spinsStats.put(uuid, new WheelStats(spinAmount, time, rare, epic, legendary));
     }
 
     public void saveWheel() {
         if (wheel == null) return;
 
         // Load the existing config file
-        File configFile = new File(getDataFolder(), "config.yml");
+        File configFile = new File(getDataFolder(), CONFIG_YML);
         YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 
-        // Set the "Wheel" information
-        config.set("Wheel", wheel.getC1());
+        // Set the Wheel information
+        config.set(WHEEL_STRING, wheel.getC1());
 
         // Save the config file
         try {
@@ -183,30 +193,30 @@ public final class SpinWheel extends JavaPlugin {
     }
 
     public void saveSpins(Player p) throws IOException {
-        if (spins.isEmpty()) return;
+        if (spinsStats.isEmpty()) return;
         if (playerData == null) return;
 
-        if (!spins.containsKey(p.getUniqueId())) return;
-        WheelStats stats = spins.get(p.getUniqueId());
-        playerData.set(p.getUniqueId() + ".Spins", stats.getSpins());
-        playerData.set(p.getUniqueId() + ".Time", stats.getTime());
-        playerData.set(p.getUniqueId() + ".Rare", stats.getRare());
-        playerData.set(p.getUniqueId() + ".Epic", stats.getEpic());
-        playerData.set(p.getUniqueId() + ".Legendary", stats.getLegendary());
+        if (!spinsStats.containsKey(p.getUniqueId())) return;
+        WheelStats stats = spinsStats.get(p.getUniqueId());
+        playerData.set(p.getUniqueId() + SPINS, stats.getSpins());
+        playerData.set(p.getUniqueId() + TIME, stats.getTime());
+        playerData.set(p.getUniqueId() + RARE, stats.getRare());
+        playerData.set(p.getUniqueId() + EPIC, stats.getEpic());
+        playerData.set(p.getUniqueId() + LEGENDARY, stats.getLegendary());
 
         playerData.save(dataFile);
     }
 
     public void saveSpins() throws IOException {
-        if (spins.isEmpty()) return;
+        if (spinsStats.isEmpty()) return;
         if (playerData == null) return;
 
-        for (Map.Entry<UUID, WheelStats> p : spins.entrySet()) {
-            playerData.set(p.getKey() + ".Spins", p.getValue().getSpins());
-            playerData.set(p.getKey() + ".Time", p.getValue().getTime());
-            playerData.set(p.getKey() + ".Rare", p.getValue().getRare());
-            playerData.set(p.getKey() + ".Epic", p.getValue().getEpic());
-            playerData.set(p.getKey() + ".Legendary", p.getValue().getLegendary());
+        for (Map.Entry<UUID, WheelStats> p : spinsStats.entrySet()) {
+            playerData.set(p.getKey() + SPINS, p.getValue().getSpins());
+            playerData.set(p.getKey() + TIME, p.getValue().getTime());
+            playerData.set(p.getKey() + RARE, p.getValue().getRare());
+            playerData.set(p.getKey() + EPIC, p.getValue().getEpic());
+            playerData.set(p.getKey() + LEGENDARY, p.getValue().getLegendary());
         }
 
         playerData.save(dataFile);
@@ -215,11 +225,13 @@ public final class SpinWheel extends JavaPlugin {
     public int generateAward(Player p, int type) {
         // Determine rarity
         double rarity;
-        if (type == 0) rarity = 0.1;
-        else if (type == 1) rarity = 0.8;
-        else if (type == 2) rarity = 0.95;
-        else if (type == 3) rarity = 0.999;
-        else rarity = Math.random();
+        switch (type) {
+            case 0 -> rarity = 0.1;
+            case 1 -> rarity = 0.8;
+            case 2 -> rarity = 0.95;
+            case 3 -> rarity = 0.999;
+            default -> rarity = Math.random();
+        }
 
         // Common
         if (rarity < 0.65) {
@@ -228,24 +240,24 @@ public final class SpinWheel extends JavaPlugin {
         }
         // Rare
         if (rarity < .90) {
-            spins.get(p.getUniqueId()).changeRare(1);
+            spinsStats.get(p.getUniqueId()).changeRare(1);
             dropItem(p, rareItems.get(randomSlot(rareItems.size())), wheel.getCenter());
             return 1;
         }
         // Epic
         if (rarity < .99) {
-            spins.get(p.getUniqueId()).changeEpic(1);
+            spinsStats.get(p.getUniqueId()).changeEpic(1);
             dropItem(p, epicItems.get(randomSlot(epicItems.size())), wheel.getCenter());
             return 2;
         }
         // Legendary
-        spins.get(p.getUniqueId()).changeLegendary(1);
+        spinsStats.get(p.getUniqueId()).changeLegendary(1);
         dropItem(p, legendaryItems.get(randomSlot(legendaryItems.size())), wheel.getCenter());
         return 3;
     }
 
     public int randomSlot(int max) {
-        return (int) Math.floor(Math.random() * max);
+        return RANDOM.nextInt(max);
     }
 
     public void dropItem(Player p, ItemStack item, Location loc) {
@@ -266,10 +278,10 @@ public final class SpinWheel extends JavaPlugin {
         if (section == null) return;
 
         section.getKeys(false).forEach(key -> {
-            Location loc = furnaceData.getLocation(key + ".Location");
+            Location loc = furnaceData.getLocation(key + LOCATION);
             assert loc != null;
             Block furnace = loc.getBlock();
-            CustomFurnace customFurnace = new CustomFurnace(loc, furnaceData.getInt(key + ".Type"));
+            CustomFurnace customFurnace = new CustomFurnace(loc, furnaceData.getInt(key + TYPE));
             BlockState state = furnace.getState();
             if (state instanceof Furnace furnaceBlock) {
                 if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
@@ -278,7 +290,7 @@ public final class SpinWheel extends JavaPlugin {
             }
             customFurnaces.add(customFurnace);
             furnaceIDs.put(loc, nextFurnaceID);
-            furnace.setMetadata("superFurnace", new FixedMetadataValue(this, furnaceData.getInt(key + ".Type")));
+            furnace.setMetadata("superFurnace", new FixedMetadataValue(this, furnaceData.getInt(key + TYPE)));
             nextFurnaceID++;
         });
     }
@@ -289,8 +301,8 @@ public final class SpinWheel extends JavaPlugin {
 
         int num = 1;
         for (CustomFurnace furnace : customFurnaces) {
-            furnaceData.set(num + ".Location", furnace.getLocation());
-            furnaceData.set(num + ".Type", furnace.getSpeed());
+            furnaceData.set(num + LOCATION, furnace.getLocation());
+            furnaceData.set(num + TYPE, furnace.getSpeed());
             Block furnaceBlock = furnace.getLocation().getBlock();
             BlockState state = furnaceBlock.getState();
             if (state instanceof Furnace block) {
@@ -306,8 +318,8 @@ public final class SpinWheel extends JavaPlugin {
     }
 
     public void saveFurnace(Location loc, int model, int id) throws IOException {
-        furnaceData.set(id + ".Location", loc);
-        furnaceData.set(id + ".Type", model);
+        furnaceData.set(id + LOCATION, loc);
+        furnaceData.set(id + TYPE, model);
         furnaceData.save(furnaceFile);
     }
 
@@ -317,50 +329,58 @@ public final class SpinWheel extends JavaPlugin {
     }
 
     public void fireworks(int type) {
-        if (type == 1) {
-            for (Location loc : wheel.getCorners()) {
-                ArrayList<Color> colors = new ArrayList<>();
-                colors.add(Color.fromRGB(0, 0, 120));
-                spawnFirework(loc.add(0, 1, 0), 0, FireworkEffect.Type.BALL, colors, false, true, null);
-            }
-        }
-        else if (type == 2) {
-            ArrayList<Color> colors = new ArrayList<>();
-            colors.add(Color.fromRGB(255, 0, 255));
-            for (Location loc : wheel.getCorners()) {
-                spawnFirework(loc.add(0, 1, 0), 0, FireworkEffect.Type.BALL, colors, true, true, null);
-            }
-            for (Location loc : wheel.getCardinalDirections()) {
-                spawnFirework(loc.add(0, 1, 0), 1, FireworkEffect.Type.BALL, colors, true, true, null);
-            }
-        }
-        else {
-            ArrayList<Color> colors = getRainbowColors();
-            new BukkitRunnable() {
-                int total = 0;
-                @Override
-                public void run() {
-                    if (total == 3) {
-                        cancel();
-                        return;
-                    }
-
-                    for (Location loc : wheel.getCorners()) {
-                        spawnFirework(loc.add(0, 1, 0), 1, FireworkEffect.Type.BALL_LARGE, colors, true, true, null);
-                    }
-                    for (Location loc : wheel.getCardinalDirections()) {
-                        spawnFirework(loc.add(0, 1, 0), 0, FireworkEffect.Type.BALL_LARGE, colors, true, true, null);
-                    }
-                    for (Location loc : wheel.getCardinalDirections()) {
-                        spawnFirework(loc.add(0, 1, 0), 2, FireworkEffect.Type.BALL_LARGE, colors, true, true, null);
-                    }
-                    total++;
-                }
-            }.runTaskTimer(this, 0, 20);
+        switch (type) {
+            case 1 -> rareFireworks();
+            case 2 -> epicFireworks();
+            default -> legendaryFireworks();
         }
     }
 
-    public void spawnFirework(Location loc, int power, FireworkEffect.Type type, ArrayList<Color> colors, boolean trail, boolean flicker, ArrayList<Color> fadeColors) {
+    private void legendaryFireworks() {
+        List<Color> colors = getRainbowColors();
+        new BukkitRunnable() {
+            int total = 0;
+            @Override
+            public void run() {
+                if (total == 3) {
+                    cancel();
+                    return;
+                }
+
+                for (Location loc : wheel.getCorners()) {
+                    spawnFirework(loc.add(0, 1, 0), 1, FireworkEffect.Type.BALL_LARGE, colors, true, true, null);
+                }
+                for (Location loc : wheel.getCardinalDirections()) {
+                    spawnFirework(loc.add(0, 1, 0), 0, FireworkEffect.Type.BALL_LARGE, colors, true, true, null);
+                }
+                for (Location loc : wheel.getCardinalDirections()) {
+                    spawnFirework(loc.add(0, 1, 0), 2, FireworkEffect.Type.BALL_LARGE, colors, true, true, null);
+                }
+                total++;
+            }
+        }.runTaskTimer(this, 0, 20);
+    }
+
+    private void epicFireworks() {
+        ArrayList<Color> colors = new ArrayList<>();
+        colors.add(Color.fromRGB(255, 0, 255));
+        for (Location loc : wheel.getCorners()) {
+            spawnFirework(loc.add(0, 1, 0), 0, FireworkEffect.Type.BALL, colors, true, true, null);
+        }
+        for (Location loc : wheel.getCardinalDirections()) {
+            spawnFirework(loc.add(0, 1, 0), 1, FireworkEffect.Type.BALL, colors, true, true, null);
+        }
+    }
+
+    private void rareFireworks() {
+        for (Location loc : wheel.getCorners()) {
+            ArrayList<Color> colors = new ArrayList<>();
+            colors.add(Color.fromRGB(0, 0, 120));
+            spawnFirework(loc.add(0, 1, 0), 0, FireworkEffect.Type.BALL, colors, false, true, null);
+        }
+    }
+
+    public void spawnFirework(Location loc, int power, FireworkEffect.Type type, List<Color> colors, boolean trail, boolean flicker, List<Color> fadeColors) {
         Firework fw = (Firework) wheel.getWorld().spawnEntity(loc, EntityType.FIREWORK_ROCKET);
         FireworkMeta fwm = fw.getFireworkMeta();
 
@@ -376,7 +396,7 @@ public final class SpinWheel extends JavaPlugin {
         fw.setFireworkMeta(fwm);
     }
 
-    public ArrayList<Color> getRainbowColors() {
+    public List<Color> getRainbowColors() {
         ArrayList<Color> colors = new ArrayList<>();
         colors.add(Color.fromRGB(255, 0, 0));
         colors.add(Color.fromRGB(0, 255, 0));
@@ -591,11 +611,11 @@ public final class SpinWheel extends JavaPlugin {
         return new ItemStack(Material.FURNACE, 1);
     }
 
-    public ItemStack enchantedBook(Enchantment ench, int level) {
+    public ItemStack enchantedBook(Enchantment enchant, int level) {
         ItemStack book = new ItemStack(Material.ENCHANTED_BOOK, 1);
         EnchantmentStorageMeta meta = (EnchantmentStorageMeta) book.getItemMeta();
         if (meta == null) return book;
-        meta.addStoredEnchant(ench, level, true);
+        meta.addStoredEnchant(enchant, level, true);
         book.setItemMeta(meta);
         return book;
     }
@@ -707,8 +727,8 @@ public final class SpinWheel extends JavaPlugin {
         this.wheel = wheel;
     }
 
-    public HashMap<UUID, WheelStats> getSpins() {
-        return spins;
+    public Map<UUID, WheelStats> getSpinsStats() {
+        return spinsStats;
     }
 
     public Essentials getEssentials() {
@@ -723,27 +743,27 @@ public final class SpinWheel extends JavaPlugin {
         this.endLoot = endLoot;
     }
 
-    public ArrayList<EntityType> getEntityTypes() {
+    public List<EntityType> getEntityTypes() {
         return entityTypes;
     }
 
-    public ArrayList<ItemStack> getCommonItems() {
+    public List<ItemStack> getCommonItems() {
         return commonItems;
     }
 
-    public ArrayList<ItemStack> getRareItems() {
+    public List<ItemStack> getRareItems() {
         return rareItems;
     }
 
-    public ArrayList<ItemStack> getEpicItems() {
+    public List<ItemStack> getEpicItems() {
         return epicItems;
     }
 
-    public ArrayList<ItemStack> getLegendaryItems() {
+    public List<ItemStack> getLegendaryItems() {
         return legendaryItems;
     }
 
-    public ArrayList<Player> getOpSpins() {
+    public List<Player> getOpSpins() {
         return opSpins;
     }
 
@@ -755,7 +775,7 @@ public final class SpinWheel extends JavaPlugin {
         opSpins.remove(p);
     }
 
-    public ArrayList<CustomFurnace> getCustomFurnaces() {
+    public List<CustomFurnace> getCustomFurnaces() {
         return customFurnaces;
     }
 
@@ -767,7 +787,7 @@ public final class SpinWheel extends JavaPlugin {
         nextFurnaceID++;
     }
 
-    public HashMap<Location, Integer> getFurnaceIDs() {
+    public Map<Location, Integer> getFurnaceIDs() {
         return furnaceIDs;
     }
 
@@ -789,7 +809,7 @@ public final class SpinWheel extends JavaPlugin {
         decrease = decrease * 100;
 
         // Clamp decrease to reasonable bounds (0.1 to 99.9 for 90% to 0.1% of original time)
-        decrease = Math.max(0.1, Math.min(99.9, decrease));
+        decrease = Math.clamp(0.1, 99.9, decrease);
 
         // Convert percentage to multiplier (50.0 -> 0.5)
         double multiplier = (100.0 - decrease) / 100.0;

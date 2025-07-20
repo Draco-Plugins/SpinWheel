@@ -34,9 +34,12 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
 
 @SuppressWarnings("deprecation")
 public class PlayerListener implements Listener {
+
+    public static final String SUPER_FURNACE = "superFurnace";
 
     private final SpinWheel plugin;
     private final ArrayList<FurnaceInventory> openCustomFurnaces = new ArrayList<>();
@@ -63,12 +66,12 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void playerJoin(PlayerJoinEvent e) {
-        if (!plugin.getSpins().containsKey(e.getPlayer().getUniqueId())) {
+        if (!plugin.getSpinsStats().containsKey(e.getPlayer().getUniqueId())) {
             plugin.loadSpins(e.getPlayer());
             return;
         }
         WheelStats stats = new WheelStats(1, 0, 0, 0, 0);
-        plugin.getSpins().put(e.getPlayer().getUniqueId(), stats);
+        plugin.getSpinsStats().put(e.getPlayer().getUniqueId(), stats);
     }
 
     @EventHandler
@@ -76,10 +79,10 @@ public class PlayerListener implements Listener {
         try {
             plugin.saveSpins(e.getPlayer());
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            Bukkit.getLogger().warning("Failed to save spins for player: " + e.getPlayer().getName());
         }
 
-        plugin.getSpins().remove(e.getPlayer().getUniqueId());
+        plugin.getSpinsStats().remove(e.getPlayer().getUniqueId());
     }
 
     @EventHandler
@@ -166,95 +169,110 @@ public class PlayerListener implements Listener {
             e.setCancelled(true);
             return;
         }
-        if (e.getBlockPlaced().getType().equals(Material.SPAWNER)) {
-            if (e.getItemInHand().getItemMeta() == null) return;
-            if (!e.getItemInHand().getItemMeta().hasCustomModelData()) return;
-            if (region != null
-                    && region.contains(BlockVector3.at(e.getBlockPlaced().getX(), e.getBlockPlaced().getY(), e.getBlockPlaced().getZ()))) {
-                e.setCancelled(true);
-                return;
+
+        if (e.getBlockPlaced().getType().equals(Material.SPAWNER)) placeCustomSpawner(e);
+        else if (e.getBlockPlaced().getType().equals(Material.FURNACE)) placeCustomFurnace(e);
+    }
+
+    private void placeCustomFurnace(BlockPlaceEvent e) {
+        if (e.getItemInHand().getItemMeta() == null) return;
+        if (!e.getItemInHand().getItemMeta().hasCustomModelData()) return;
+        if (region != null && region.contains(BlockVector3.at(e.getBlockPlaced().getX(), e.getBlockPlaced().getY(), e.getBlockPlaced().getZ()))) {
+            e.setCancelled(true);
+            return;
+        }
+        int model = e.getItemInHand().getItemMeta().getCustomModelData();
+        if (model < 1 || model > 4) return;
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Block block = e.getBlockPlaced();
+                block.getState().setMetadata(SUPER_FURNACE, new FixedMetadataValue(plugin, model));
+                plugin.getCustomFurnaces().add(new CustomFurnace(block.getLocation(), model));
+                plugin.getFurnaceIDs().put(block.getLocation(), plugin.getNextFurnaceID());
+
+                try {
+                    plugin.saveFurnace(block.getLocation(), model, plugin.getNextFurnaceID());
+                    plugin.incrementNextFurnaceID();
+                } catch (Exception ex) {
+                    Bukkit.getLogger().warning("Failed to save furnace at " + block.getLocation() + ": " + ex.getMessage());
+                    e.getPlayer().sendMessage(ChatColor.RED + "Failed to place custom furnace. Please try again.");
+                }
             }
-            int model = e.getItemInHand().getItemMeta().getCustomModelData();
-            if (model >= 100) {
-                CreatureSpawner spawner = (CreatureSpawner) e.getBlockPlaced().getState();
-                spawner.setSpawnedType(plugin.getEntityTypes().get(model - 100));
-                spawner.setDelay(50);
-                spawner.setSpawnCount(4);
-                spawner.setSpawnRange(4);
-                spawner.setMinSpawnDelay(50);
-                spawner.setMaxSpawnDelay(50);
-                spawner.setMaxNearbyEntities(6);
-                spawner.setRequiredPlayerRange(16);
-                spawner.update();
-            }
+        }.runTaskLater(plugin, 5);
+    }
+
+    private void placeCustomSpawner(BlockPlaceEvent e) {
+        if (e.getItemInHand().getItemMeta() == null) return;
+        if (!e.getItemInHand().getItemMeta().hasCustomModelData()) return;
+        if (region != null
+                && region.contains(BlockVector3.at(e.getBlockPlaced().getX(), e.getBlockPlaced().getY(), e.getBlockPlaced().getZ()))) {
+            e.setCancelled(true);
+            return;
+        }
+        int model = e.getItemInHand().getItemMeta().getCustomModelData();
+        if (model >= 100) {
             CreatureSpawner spawner = (CreatureSpawner) e.getBlockPlaced().getState();
-            spawner.setSpawnedType(plugin.getEntityTypes().get(model));
+            spawner.setSpawnedType(plugin.getEntityTypes().get(model - 100));
+            spawner.setDelay(50);
+            spawner.setSpawnCount(4);
+            spawner.setSpawnRange(4);
+            spawner.setMinSpawnDelay(50);
+            spawner.setMaxSpawnDelay(50);
+            spawner.setMaxNearbyEntities(6);
+            spawner.setRequiredPlayerRange(16);
             spawner.update();
         }
-        else if (e.getBlockPlaced().getType().equals(Material.FURNACE)) {
-            if (e.getItemInHand().getItemMeta() == null) return;
-            if (!e.getItemInHand().getItemMeta().hasCustomModelData()) return;
-            if (region != null && region.contains(BlockVector3.at(e.getBlockPlaced().getX(), e.getBlockPlaced().getY(), e.getBlockPlaced().getZ()))) {
-                e.setCancelled(true);
-                return;
-            }
-            int model = e.getItemInHand().getItemMeta().getCustomModelData();
-            if (model < 1 || model > 4) return;
-
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    Block block = e.getBlockPlaced();
-                    block.getState().setMetadata("superFurnace", new FixedMetadataValue(plugin, model));
-                    plugin.getCustomFurnaces().add(new CustomFurnace(block.getLocation(), model));
-                    plugin.getFurnaceIDs().put(block.getLocation(), plugin.getNextFurnaceID());
-
-                    try {
-                        plugin.saveFurnace(block.getLocation(), model, plugin.getNextFurnaceID());
-                        plugin.incrementNextFurnaceID();
-                    } catch (Exception ex) {
-                        throw new RuntimeException(ex);
-                    }
-                }
-            }.runTaskLater(plugin, 5);
-        }
+        CreatureSpawner spawner = (CreatureSpawner) e.getBlockPlaced().getState();
+        spawner.setSpawnedType(plugin.getEntityTypes().get(model));
+        spawner.update();
     }
 
     @EventHandler (ignoreCancelled = true)
     public void blockBreakEvent(BlockBreakEvent e) {
         if (e.getBlock().getType().equals(Material.FURNACE)) {
             if (plugin.isGriefPreventionEnabled() && plugin.checkForClaim(e.getPlayer(), e.getBlock().getLocation())) return;
-            CustomFurnace furnace;
-            furnace = getCustomFurnace(e.getBlock());
+            CustomFurnace furnace = getCustomFurnace(e.getBlock());
 
-            if (furnace == null)  {
-                if (!e.getBlock().getState().hasMetadata("superFurnace")) return;
-                int type = e.getBlock().getState().getMetadata("superFurnace").getFirst().asInt();
-                e.setDropItems(false);
-                e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), plugin.fastFurnace(type));
+            // If we found a CustomFurnace object, handle it through the normal custom furnace removal
+            if (furnace != null) {
+                removeCustomFurnace(e, furnace);
                 return;
             }
 
-            if (!plugin.getFurnaceIDs().containsKey(furnace.getLocation())) return;
-            e.setDropItems(false);
-            plugin.getCustomFurnaces().remove(furnace);
-            ArrayList<ItemStack> newDrops = new ArrayList<>();
-            if (furnace.getFuel() != null) newDrops.add(furnace.getFuel());
-            if (furnace.getSmelting() != null) newDrops.add(furnace.getSmelting());
-            if (furnace.getResult() != null) newDrops.add(furnace.getResult());
-            newDrops.add(plugin.fastFurnace(furnace.getSpeed()));
-            for (ItemStack drop : newDrops) e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), drop);
-
-            int id = plugin.getFurnaceIDs().get(furnace.getLocation());
-            try {
-                plugin.removeFurnace(id);
-            }
-            catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
+            // If no CustomFurnace object, but it has super furnace metadata, handle it as a metadata-only furnace
+            checkForSuperFurnace(e);
         }
         if (plugin.getWheel() == null) return;
         if (plugin.getWheel().getLocations().contains(e.getBlock().getLocation())) e.setCancelled(true);
+    }
+
+    private void removeCustomFurnace(BlockBreakEvent e, CustomFurnace furnace) {
+        if (!plugin.getFurnaceIDs().containsKey(furnace.getLocation())) return;
+        e.setDropItems(false);
+        plugin.getCustomFurnaces().remove(furnace);
+        ArrayList<ItemStack> newDrops = new ArrayList<>();
+        if (furnace.getFuel() != null) newDrops.add(furnace.getFuel());
+        if (furnace.getSmelting() != null) newDrops.add(furnace.getSmelting());
+        if (furnace.getResult() != null) newDrops.add(furnace.getResult());
+        newDrops.add(plugin.fastFurnace(furnace.getSpeed()));
+        for (ItemStack drop : newDrops) e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), drop);
+
+        int id = plugin.getFurnaceIDs().get(furnace.getLocation());
+        try {
+            plugin.removeFurnace(id);
+        }
+        catch (Exception ex) {
+            Bukkit.getLogger().log(Level.WARNING, "Failed to remove furnace with ID: {0}", id);
+        }
+    }
+
+    private void checkForSuperFurnace(BlockBreakEvent e) {
+        if (!e.getBlock().getState().hasMetadata(SUPER_FURNACE)) return;
+        int type = e.getBlock().getState().getMetadata(SUPER_FURNACE).getFirst().asInt();
+        e.setDropItems(false);
+        e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), plugin.fastFurnace(type));
     }
 
     public CustomFurnace getCustomFurnace(Block block) {

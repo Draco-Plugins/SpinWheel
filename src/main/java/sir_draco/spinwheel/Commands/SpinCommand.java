@@ -30,7 +30,7 @@ public class SpinCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String s, String[] strings) {
         if (!(sender instanceof Player p)) return false;
         // Check that they have a spin available
-        if (plugin.getSpins().get(p.getUniqueId()).getSpins() == 0 && !plugin.getOpSpins().contains(p)) {
+        if (plugin.getSpinsStats().get(p.getUniqueId()).getSpins() == 0 && !plugin.getOpSpins().contains(p)) {
             p.sendRawMessage(ChatColor.RED + "You have no spins available");
             p.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
             return true;
@@ -72,10 +72,10 @@ public class SpinCommand implements CommandExecutor {
 
         // Check if the player wants to use all their spins at once
         if (strings.length == 1 && strings[0].equalsIgnoreCase("all")) {
-            WheelStats stats = plugin.getSpins().get(p.getUniqueId());
+            WheelStats stats = plugin.getSpinsStats().get(p.getUniqueId());
             int spins = stats.getSpins();
             stats.changeSpins(-spins);
-            p.sendRawMessage(ChatColor.GREEN + "You now have " + ChatColor.AQUA + plugin.getSpins().get(p.getUniqueId()).getSpins()
+            p.sendRawMessage(ChatColor.GREEN + "You now have " + ChatColor.AQUA + plugin.getSpinsStats().get(p.getUniqueId()).getSpins()
                     + ChatColor.GREEN + " spins remaining");
             p.playSound(p, Sound.ITEM_GOAT_HORN_SOUND_0, 2, 1);
             plugin.getWheel().setSpinning(true);
@@ -86,7 +86,7 @@ public class SpinCommand implements CommandExecutor {
 
         // Check if they want their stats
         if (strings.length == 1 && strings[0].equalsIgnoreCase("stats")) {
-            WheelStats stats = plugin.getSpins().get(p.getUniqueId());
+            WheelStats stats = plugin.getSpinsStats().get(p.getUniqueId());
             p.sendRawMessage(ChatColor.GREEN + "You have received " + ChatColor.AQUA + stats.getRare() + ChatColor.GREEN + " rare rewards");
             p.sendRawMessage(ChatColor.GREEN + "You have received " + ChatColor.AQUA + stats.getEpic() + ChatColor.GREEN + " epic rewards");
             p.sendRawMessage(ChatColor.GREEN + "You have received " + ChatColor.AQUA + stats.getLegendary() + ChatColor.GREEN + " legendary rewards");
@@ -96,12 +96,12 @@ public class SpinCommand implements CommandExecutor {
 
         // Check if operator doesn't want spin count to change
         if (p.hasPermission("wheel.admin") && plugin.getOpSpins().contains(p)) {
-            plugin.getSpins().get(p.getUniqueId()).changeSpins(1);
+            plugin.getSpinsStats().get(p.getUniqueId()).changeSpins(1);
         }
 
         // Spin the wheel
-        plugin.getSpins().get(p.getUniqueId()).changeSpins(-1);
-        p.sendRawMessage(ChatColor.GREEN + "You now have " + ChatColor.AQUA + plugin.getSpins().get(p.getUniqueId()).getSpins()
+        plugin.getSpinsStats().get(p.getUniqueId()).changeSpins(-1);
+        p.sendRawMessage(ChatColor.GREEN + "You now have " + ChatColor.AQUA + plugin.getSpinsStats().get(p.getUniqueId()).getSpins()
                 + ChatColor.GREEN + " spins remaining");
         p.playSound(p, Sound.ITEM_GOAT_HORN_SOUND_0, 2, 1);
         plugin.getWheel().setSpinning(true);
