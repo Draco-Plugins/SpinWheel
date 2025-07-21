@@ -82,6 +82,7 @@ public class SpinTimer extends BukkitRunnable {
         else if (word.equalsIgnoreCase("epic")) type = 2;
         else if (word.equalsIgnoreCase("legendary")) type = 3;
         else if (word.equalsIgnoreCase("all")) type = 4;
+        else if (word.equalsIgnoreCase("multiple")) type = 4;
         else type = -1;
     }
 

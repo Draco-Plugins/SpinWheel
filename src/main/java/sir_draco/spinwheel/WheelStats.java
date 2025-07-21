@@ -7,6 +7,7 @@ public class WheelStats {
     private int rare;
     private int epic;
     private int legendary;
+    private static final int MAX_SPINS = 500; // Maximum number of spins a player can hold
 
     public WheelStats(int spins, int time, int rare, int epic, int legendary) {
         this.spins = spins;
@@ -21,11 +22,11 @@ public class WheelStats {
     }
 
     public void setSpins(int spins) {
-        this.spins = spins;
+        this.spins = Math.min(spins, MAX_SPINS);
     }
 
     public void changeSpins(int amount) {
-        spins += amount;
+        spins = Math.min(spins + amount, MAX_SPINS);
     }
 
     public int getTime() {
@@ -74,5 +75,31 @@ public class WheelStats {
 
     public void changeLegendary(int amount) {
         legendary += amount;
+    }
+
+    /**
+     * Attempts to add spins to the player, returns true if successful (under the cap),
+     * false if the player is already at the maximum spin limit
+     */
+    public boolean tryAddSpins(int amount) {
+        if (spins >= MAX_SPINS) {
+            return false; // Already at max, cannot add more
+        }
+        spins = Math.min(spins + amount, MAX_SPINS);
+        return true;
+    }
+
+    /**
+     * Gets the maximum number of spins a player can hold
+     */
+    public static int getMaxSpins() {
+        return MAX_SPINS;
+    }
+
+    /**
+     * Checks if the player is at the maximum spin limit
+     */
+    public boolean isAtMaxSpins() {
+        return spins >= MAX_SPINS;
     }
 }

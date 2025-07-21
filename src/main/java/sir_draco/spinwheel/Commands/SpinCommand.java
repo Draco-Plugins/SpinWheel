@@ -94,6 +94,41 @@ public class SpinCommand implements CommandExecutor {
             return true;
         }
 
+        // Check if they want to gamble a specific number of spins
+        if (strings.length == 1) {
+            try {
+                int requestedSpins = Integer.parseInt(strings[0]);
+                if (requestedSpins <= 0) {
+                    p.sendRawMessage(ChatColor.RED + "Please enter a positive number of spins");
+                    p.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                    return true;
+                }
+
+                WheelStats stats = plugin.getSpins().get(p.getUniqueId());
+                int availableSpins = stats.getSpins();
+
+                // Check if player has enough spins (unless they're an admin with infinite spins)
+                if (!plugin.getOpSpins().contains(p) && requestedSpins > availableSpins) {
+                    p.sendRawMessage(ChatColor.RED + "You only have " + ChatColor.AQUA + availableSpins + ChatColor.RED + " spins available");
+                    p.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                    return true;
+                }
+
+                // Deduct the spins
+                stats.changeSpins(-requestedSpins);
+                p.sendRawMessage(ChatColor.GREEN + "You now have " + ChatColor.AQUA + plugin.getSpins().get(p.getUniqueId()).getSpins()
+                        + ChatColor.GREEN + " spins remaining");
+                p.playSound(p, Sound.ITEM_GOAT_HORN_SOUND_0, 2, 1);
+                plugin.getWheel().setSpinning(true);
+                SpinTimer spin = new SpinTimer(plugin, p, "multiple", requestedSpins);
+                spin.runTaskTimer(plugin, 40, 1);
+                return true;
+            } catch (NumberFormatException e) {
+                // Not a number, continue to normal processing
+                p.sendRawMessage(ChatColor.RED + "Invalid number of spins specified. Please enter a valid number.");
+            }
+        }
+
         // Check if operator doesn't want spin count to change
         if (p.hasPermission("wheel.admin") && plugin.getOpSpins().contains(p)) {
             plugin.getSpinsStats().get(p.getUniqueId()).changeSpins(1);
