@@ -1,4 +1,4 @@
-package sir_draco.spinwheel.Commands;
+package sir_draco.spinwheel.commands;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;

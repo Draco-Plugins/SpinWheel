@@ -22,7 +22,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import sir_draco.spinwheel.Commands.*;
+import sir_draco.spinwheel.commands.*;
 
 import java.io.File;
 import java.io.IOException;
