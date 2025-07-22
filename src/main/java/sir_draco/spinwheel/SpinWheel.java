@@ -809,7 +809,7 @@ public final class SpinWheel extends JavaPlugin {
         decrease = decrease * 100;
 
         // Clamp decrease to reasonable bounds (0.1 to 99.9 for 90% to 0.1% of original time)
-        decrease = Math.clamp(0.1, 99.9, decrease);
+        decrease = Math.clamp(decrease, 0.1, 99.9);
 
         // Convert percentage to multiplier (50.0 -> 0.5)
         double multiplier = (100.0 - decrease) / 100.0;
