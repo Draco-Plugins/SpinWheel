@@ -19,10 +19,12 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.FurnaceInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 import sir_draco.spinwheel.SpinWheel;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
 @SuppressWarnings ("deprecation")
@@ -177,7 +179,9 @@ public class FurnaceListener implements Listener {
 
     private void checkForSuperFurnace(BlockBreakEvent e) {
         if (!e.getBlock().getState().hasMetadata(SUPER_FURNACE)) return;
-        int type = e.getBlock().getState().getMetadata(SUPER_FURNACE).getFirst().asInt();
+        List<MetadataValue> metaList = e.getBlock().getState().getMetadata(SUPER_FURNACE);
+        if (metaList.isEmpty()) return;
+        int type = metaList.getFirst().asInt();
         e.setDropItems(false);
         e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), plugin.fastFurnace(type));
     }

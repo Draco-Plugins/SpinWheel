@@ -291,7 +291,10 @@ public final class SpinWheel extends JavaPlugin {
 
         section.getKeys(false).forEach(key -> {
             Location loc = furnaceData.getLocation(key + LOCATION);
-            assert loc != null;
+            if (loc == null) {
+                Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Found furnace with null location for key {0}, skipping", key);
+                return;
+            }
 
             // Skip if we already loaded a furnace at this location
             if (loadedLocations.contains(loc)) {
@@ -306,27 +309,23 @@ public final class SpinWheel extends JavaPlugin {
                 return;
             }
 
-            loadFurnaceHelper(key, loc, furnace, loadedLocations);
+            CustomFurnace customFurnace = new CustomFurnace(loc, furnaceData.getInt(key + TYPE));
+            customFurnace.setCanBreak(true);
+            BlockState state = furnace.getState();
+            if (state instanceof Furnace furnaceBlock) {
+                if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
+                if (furnaceBlock.getInventory().getSmelting() != null) customFurnace.getInventory().setSmelting(furnaceBlock.getInventory().getSmelting());
+                if (furnaceBlock.getInventory().getResult() != null) customFurnace.getInventory().setResult(furnaceBlock.getInventory().getResult());
+            }
+            customFurnaces.add(customFurnace);
+            furnaceIDs.put(loc, nextFurnaceID);
+            furnace.setMetadata("superFurnace", new FixedMetadataValue(this, furnaceData.getInt(key + TYPE)));
+            loadedLocations.add(loc);
+            nextFurnaceID++;
         });
 
         // Clean up any duplicate furnaces that might exist in memory
         cleanupDuplicateFurnaces();
-    }
-
-    private void loadFurnaceHelper(String key, Location loc, Block furnace, Set<Location> loadedLocations) {
-        CustomFurnace customFurnace = new CustomFurnace(loc, furnaceData.getInt(key + TYPE));
-        customFurnace.setCanBreak(true);
-        BlockState state = furnace.getState();
-        if (state instanceof Furnace furnaceBlock) {
-            if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
-            if (furnaceBlock.getInventory().getSmelting() != null) customFurnace.getInventory().setSmelting(furnaceBlock.getInventory().getSmelting());
-            if (furnaceBlock.getInventory().getResult() != null) customFurnace.getInventory().setResult(furnaceBlock.getInventory().getResult());
-        }
-        customFurnaces.add(customFurnace);
-        furnaceIDs.put(loc, nextFurnaceID);
-        furnace.setMetadata("superFurnace", new FixedMetadataValue(this, furnaceData.getInt(key + TYPE)));
-        loadedLocations.add(loc);
-        nextFurnaceID++;
     }
 
     /**
@@ -366,8 +365,7 @@ public final class SpinWheel extends JavaPlugin {
         // Second pass: remove duplicates
         if (foundDuplicates) {
             for (String keyToRemove : keysToRemove) {
-                furnaceData.set(keyToRemove + LOCATION, null);
-                furnaceData.set(keyToRemove + TYPE, null);
+                furnaceData.set(keyToRemove, null);
             }
 
             try {
@@ -430,8 +428,7 @@ public final class SpinWheel extends JavaPlugin {
         if (furnaceData == null) return;
 
         String key = String.valueOf(id);
-        furnaceData.set(key + LOCATION, null);
-        furnaceData.set(key + TYPE, null);
+        furnaceData.set(key, null);
 
         // Remove from furnaceIDs map
         furnaceIDs.entrySet().removeIf(entry -> entry.getValue().equals(id));
