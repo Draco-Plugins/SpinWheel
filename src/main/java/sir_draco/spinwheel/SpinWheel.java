@@ -23,6 +23,9 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import sir_draco.spinwheel.commands.*;
+import sir_draco.spinwheel.furnaces.CustomFurnace;
+import sir_draco.spinwheel.furnaces.CustomFurnaceChecker;
+import sir_draco.spinwheel.furnaces.FurnaceListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,6 +111,7 @@ public final class SpinWheel extends JavaPlugin {
 
         // Listeners
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        getServer().getPluginManager().registerEvents(new FurnaceListener(this), this);
         getServer().getPluginManager().registerEvents(new SpinTabComplete(), this);
 
         if (getServer().getPluginManager().getPlugin("GriefPrevention") != null) griefPreventionEnabled = true;
@@ -134,8 +138,6 @@ public final class SpinWheel extends JavaPlugin {
         } catch (IOException e) {
             Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Failed to save furnaces", e);
         }
-
-        instance = null;
     }
 
     public void loadWheel() {
@@ -277,55 +279,172 @@ public final class SpinWheel extends JavaPlugin {
         ConfigurationSection section = furnaceData.getConfigurationSection("");
         if (section == null) return;
 
+        // First, clean up duplicates in the YAML file
+        cleanupDuplicateFurnacesInFile();
+
+        // Reload the configuration after cleanup
+        section = furnaceData.getConfigurationSection("");
+        if (section == null) return;
+
+        // Use a set to track already loaded locations to prevent duplicates
+        Set<Location> loadedLocations = new HashSet<>();
+
         section.getKeys(false).forEach(key -> {
             Location loc = furnaceData.getLocation(key + LOCATION);
             assert loc != null;
-            Block furnace = loc.getBlock();
-            CustomFurnace customFurnace = new CustomFurnace(loc, furnaceData.getInt(key + TYPE));
-            BlockState state = furnace.getState();
-            if (state instanceof Furnace furnaceBlock) {
-                if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
-                if (furnaceBlock.getInventory().getSmelting() != null) customFurnace.getInventory().setSmelting(furnaceBlock.getInventory().getSmelting());
-                if (furnaceBlock.getInventory().getResult() != null) customFurnace.getInventory().setResult(furnaceBlock.getInventory().getResult());
+
+            // Skip if we already loaded a furnace at this location
+            if (loadedLocations.contains(loc)) {
+                Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Duplicate furnace found at {0}, skipping", loc);
+                return;
             }
-            customFurnaces.add(customFurnace);
-            furnaceIDs.put(loc, nextFurnaceID);
-            furnace.setMetadata("superFurnace", new FixedMetadataValue(this, furnaceData.getInt(key + TYPE)));
-            nextFurnaceID++;
+
+            Block furnace = loc.getBlock();
+            // Verify the block is actually a furnace
+            if (!furnace.getType().equals(Material.FURNACE)) {
+                Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Expected furnace at {0} but found {1}, skipping", new Object[]{loc, furnace.getType()});
+                return;
+            }
+
+            loadFurnaceHelper(key, loc, furnace, loadedLocations);
         });
+
+        // Clean up any duplicate furnaces that might exist in memory
+        cleanupDuplicateFurnaces();
     }
 
-    public void saveFurnaces() throws IOException {
-        if (customFurnaces.isEmpty()) return;
-        if (furnaceData == null) return;
+    private void loadFurnaceHelper(String key, Location loc, Block furnace, Set<Location> loadedLocations) {
+        CustomFurnace customFurnace = new CustomFurnace(loc, furnaceData.getInt(key + TYPE));
+        customFurnace.setCanBreak(true);
+        BlockState state = furnace.getState();
+        if (state instanceof Furnace furnaceBlock) {
+            if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
+            if (furnaceBlock.getInventory().getSmelting() != null) customFurnace.getInventory().setSmelting(furnaceBlock.getInventory().getSmelting());
+            if (furnaceBlock.getInventory().getResult() != null) customFurnace.getInventory().setResult(furnaceBlock.getInventory().getResult());
+        }
+        customFurnaces.add(customFurnace);
+        furnaceIDs.put(loc, nextFurnaceID);
+        furnace.setMetadata("superFurnace", new FixedMetadataValue(this, furnaceData.getInt(key + TYPE)));
+        loadedLocations.add(loc);
+        nextFurnaceID++;
+    }
 
-        int num = 1;
-        for (CustomFurnace furnace : customFurnaces) {
-            furnaceData.set(num + LOCATION, furnace.getLocation());
-            furnaceData.set(num + TYPE, furnace.getSpeed());
-            Block furnaceBlock = furnace.getLocation().getBlock();
-            BlockState state = furnaceBlock.getState();
-            if (state instanceof Furnace block) {
-                FurnaceInventory inv = block.getInventory();
-                if (furnace.getFuel() != null) inv.setFuel(furnace.getFuel());
-                if (furnace.getSmelting() != null) inv.setSmelting(furnace.getSmelting());
-                if (furnace.getResult() != null) inv.setResult(furnace.getResult());
+    /**
+     * Clean up duplicate furnaces from the YAML configuration file
+     */
+    private void cleanupDuplicateFurnacesInFile() {
+        ConfigurationSection section = furnaceData.getConfigurationSection("");
+        if (section == null) return;
+
+        Map<Location, String> locationToKey = new HashMap<>();
+        Set<String> keysToRemove = new HashSet<>();
+        boolean foundDuplicates = false;
+
+        // First pass: identify duplicates
+        for (String key : section.getKeys(false)) {
+            Location loc = furnaceData.getLocation(key + LOCATION);
+            if (loc == null) {
+                // Invalid location, mark for removal
+                keysToRemove.add(key);
+                foundDuplicates = true;
+                Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Found furnace with invalid location, removing key: {0}", key);
+                continue;
             }
-            num++;
+
+            if (locationToKey.containsKey(loc)) {
+                // Duplicate location found
+                String existingKey = locationToKey.get(loc);
+                keysToRemove.add(key);
+                foundDuplicates = true;
+                Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Found duplicate furnace at {0}, removing key {1} (keeping {2})",
+                    new Object[]{loc, key, existingKey});
+            } else {
+                locationToKey.put(loc, key);
+            }
         }
 
-        furnaceData.save(furnaceFile);
+        // Second pass: remove duplicates
+        if (foundDuplicates) {
+            for (String keyToRemove : keysToRemove) {
+                furnaceData.set(keyToRemove + LOCATION, null);
+                furnaceData.set(keyToRemove + TYPE, null);
+            }
+
+            try {
+                furnaceData.save(furnaceFile);
+                Bukkit.getLogger().log(Level.INFO, "[SpinWheel] Cleaned up {0} duplicate furnace entries from configuration file", keysToRemove.size());
+            } catch (IOException e) {
+                Bukkit.getLogger().log(Level.SEVERE, "[SpinWheel] Failed to save cleaned furnace configuration", e);
+            }
+        }
     }
 
-    public void saveFurnace(Location loc, int model, int id) throws IOException {
-        furnaceData.set(id + LOCATION, loc);
-        furnaceData.set(id + TYPE, model);
-        furnaceData.save(furnaceFile);
+    /**
+     * Remove duplicate furnaces from the same location, keeping only the first one
+     */
+    private void cleanupDuplicateFurnaces() {
+        Map<Location, CustomFurnace> uniqueFurnaces = new LinkedHashMap<>();
+
+        for (CustomFurnace furnace : customFurnaces) {
+            Location loc = furnace.getLocation();
+            if (!uniqueFurnaces.containsKey(loc)) {
+                uniqueFurnaces.put(loc, furnace);
+            } else {
+                Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Removing duplicate furnace at {0}", loc);
+            }
+        }
+
+        customFurnaces.clear();
+        customFurnaces.addAll(uniqueFurnaces.values());
+
+        // Clean up furnaceIDs map to match
+        Map<Location, Integer> cleanedIDs = new HashMap<>();
+        for (CustomFurnace furnace : customFurnaces) {
+            Location loc = furnace.getLocation();
+            if (furnaceIDs.containsKey(loc)) {
+                cleanedIDs.put(loc, furnaceIDs.get(loc));
+            }
+        }
+        furnaceIDs.clear();
+        furnaceIDs.putAll(cleanedIDs);
     }
 
+    /**
+     * Save a single furnace to the configuration
+     */
+    public void saveFurnace(Location location, int speed, int id) throws IOException {
+        if (furnaceData == null) return;
+
+        String key = String.valueOf(id);
+        furnaceData.set(key + LOCATION, location);
+        furnaceData.set(key + TYPE, speed);
+
+        furnaceData.save(furnaceFile);
+        Bukkit.getLogger().log(Level.INFO, "[SpinWheel] Saved furnace with ID {0} at {1}", new Object[]{id, location});
+    }
+
+    /**
+     * Remove a furnace from the configuration by ID
+     */
     public void removeFurnace(int id) throws IOException {
-        furnaceData.set(String.valueOf(id), null);
+        if (furnaceData == null) return;
+
+        String key = String.valueOf(id);
+        furnaceData.set(key + LOCATION, null);
+        furnaceData.set(key + TYPE, null);
+
+        // Remove from furnaceIDs map
+        furnaceIDs.entrySet().removeIf(entry -> entry.getValue().equals(id));
+
         furnaceData.save(furnaceFile);
+        Bukkit.getLogger().log(Level.INFO, "[SpinWheel] Removed furnace with ID {0}", id);
+    }
+
+    /**
+     * Check if a furnace already exists at the given location
+     */
+    public boolean hasFurnaceAt(Location location) {
+        return customFurnaces.stream().anyMatch(furnace -> furnace.getLocation().equals(location));
     }
 
     public void fireworks(int type) {
@@ -815,5 +934,45 @@ public final class SpinWheel extends JavaPlugin {
         double multiplier = (100.0 - decrease) / 100.0;
 
         instance.timeMultipliers.put(uuid, multiplier);
+    }
+
+    /**
+     * Save all furnaces to the configuration file
+     */
+    public void saveFurnaces() throws IOException {
+        if (customFurnaces.isEmpty()) return;
+        if (furnaceData == null) return;
+
+        // Clear existing data first
+        ConfigurationSection section = furnaceData.getConfigurationSection("");
+        if (section != null) {
+            for (String key : section.getKeys(false)) {
+                furnaceData.set(key + LOCATION, null);
+                furnaceData.set(key + TYPE, null);
+            }
+        }
+
+        // Save all current furnaces
+        int num = 1;
+        for (CustomFurnace furnace : customFurnaces) {
+            num = saveFurnaceAndState(furnace, num);
+        }
+
+        furnaceData.save(furnaceFile);
+    }
+
+    private int saveFurnaceAndState(CustomFurnace furnace, int num) {
+        furnaceData.set(num + LOCATION, furnace.getLocation());
+        furnaceData.set(num + TYPE, furnace.getSpeed());
+        Block furnaceBlock = furnace.getLocation().getBlock();
+        BlockState state = furnaceBlock.getState();
+        if (state instanceof Furnace block) {
+            FurnaceInventory inv = block.getInventory();
+            if (furnace.getFuel() != null) inv.setFuel(furnace.getFuel());
+            if (furnace.getSmelting() != null) inv.setSmelting(furnace.getSmelting());
+            if (furnace.getResult() != null) inv.setResult(furnace.getResult());
+        }
+        num++;
+        return num;
     }
 }

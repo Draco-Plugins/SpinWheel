@@ -1,4 +1,4 @@
-package sir_draco.spinwheel;
+package sir_draco.spinwheel.furnaces;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -16,33 +16,44 @@ public class CustomFurnace {
 
     private int ticksPassed;
     private int fuel;
+    private boolean canBreak = false;
 
     public CustomFurnace(Location location, int speed) {
         this.location = location;
         this.speed = speed;
         String name;
-        if (speed == 1) name = "2x Speed Furnace";
-        else if (speed == 2) name = "3x Speed Furnace";
-        else if (speed == 3) name = "4x Speed Furnace";
-        else name = "2 Tick Furnace";
+        switch (speed) {
+            case 1 -> name = "2x Speed Furnace";
+            case 2 -> name = "3x Speed Furnace";
+            case 3 -> name = "4x Speed Furnace";
+            case 4 -> name = "2 Tick Furnace";
+            default -> name = "Furnace";
+        }
         inventory = (FurnaceInventory) Bukkit.createInventory(null, InventoryType.FURNACE, name);
     }
 
     public void tickFurnace() {
         if (getSmelting() == null) return;
         if (fuel <= 0 && getFuel() == null) return;
-        if (fuel != 0) {
-            if (speed == 1) fuel -= 1;
-            else if (speed == 2) fuel -= 2;
-            else if (speed == 3) fuel -= 4;
-            else fuel -= 50;
-        }
-        if (!CustomFurnaceChecker.getFurnaceRecipes().containsKey(getSmelting().getType())) return;
-        if (getResult() != null && getResult().getAmount() == 64) return;
 
+        removeFuel();
+
+        // Make sure the furnace can smelt the item
+        if (!CustomFurnaceChecker.getFurnaceRecipes().containsKey(getSmelting().getType())) return;
+        // Check if the furnace is already full
+        if (getResult() != null && getResult().getAmount() == 64) return;
+        // Make sure the fuel is valid
         if (getFuel() != null && !CustomFurnaceChecker.getBurnTimeList().containsKey(getFuel().getType())) return;
 
         // Fuel
+        handleBurningFuel();
+        if (fuel == 0) return; // Out of fuel
+
+        // Cook item
+        cookItem();
+    }
+
+    private void handleBurningFuel() {
         if (fuel <= 0 && getFuel() != null) {
             fuel = CustomFurnaceChecker.getBurnTimeList().get(getFuel().getType());
             if (getFuel().getType().equals(Material.LAVA_BUCKET)) {
@@ -53,27 +64,39 @@ public class CustomFurnace {
                 else inventory.setFuel(new ItemStack(getFuel().getType(), fuelLeft));
             }
         }
-        if (fuel == 0) return;
+    }
 
-        // Burn
-        if (speed == 1) ticksPassed += 2;
-        else if (speed == 2) ticksPassed += 3;
-        else if (speed == 3) ticksPassed += 4;
-        else ticksPassed += 100;
-
-        // Cook item
-        if (ticksPassed >= 200) {
-            Material mat = CustomFurnaceChecker.getFurnaceRecipes().get(getSmelting().getType());
-            if (getResult() != null) {
-                int amount = getResult().getAmount() + 1;
-                inventory.setResult(new ItemStack(mat, amount));
+    private void removeFuel() {
+        if (fuel != 0) {
+            switch (speed) {
+                case 1 -> fuel -= 1;
+                case 2 -> fuel -= 2;
+                case 3 -> fuel -= 4;
+                default -> fuel -= 50;
             }
-            else inventory.setResult(new ItemStack(mat, 1));
-            int amount = getSmelting().getAmount() - 1;
-            if (amount == 0) inventory.setSmelting(null);
-            else inventory.setSmelting(new ItemStack(getSmelting().getType(), amount));
-            ticksPassed = 0;
         }
+    }
+
+    private void cookItem() {
+        switch (speed) {
+            case 1 -> ticksPassed += 2;
+            case 2 -> ticksPassed += 3;
+            case 3 -> ticksPassed += 4;
+            case 4 -> ticksPassed += 50;
+            default -> ticksPassed += 1;
+        }
+
+        if (ticksPassed < 200) return;
+        Material mat = CustomFurnaceChecker.getFurnaceRecipes().get(getSmelting().getType());
+        if (getResult() != null) {
+            int amount = getResult().getAmount() + 1;
+            inventory.setResult(new ItemStack(mat, amount));
+        }
+        else inventory.setResult(new ItemStack(mat, 1));
+        int amount = getSmelting().getAmount() - 1;
+        if (amount == 0) inventory.setSmelting(null);
+        else inventory.setSmelting(new ItemStack(getSmelting().getType(), amount));
+        ticksPassed = 0;
     }
 
     public void openFurnace(Player p) {
@@ -102,5 +125,13 @@ public class CustomFurnace {
 
     public FurnaceInventory getInventory() {
         return inventory;
+    }
+
+    public void setCanBreak(boolean canBreak) {
+        this.canBreak = canBreak;
+    }
+
+    public boolean canBreak() {
+        return canBreak;
     }
 }

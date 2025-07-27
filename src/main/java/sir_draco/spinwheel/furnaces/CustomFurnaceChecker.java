@@ -1,13 +1,15 @@
-package sir_draco.spinwheel;
+package sir_draco.spinwheel.furnaces;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.scheduler.BukkitRunnable;
+import sir_draco.spinwheel.SpinWheel;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class CustomFurnaceChecker extends BukkitRunnable {
 
@@ -218,11 +220,11 @@ public class CustomFurnaceChecker extends BukkitRunnable {
         }
     }
 
-    public static HashMap<Material, Integer> getBurnTimeList() {
+    public static Map<Material, Integer> getBurnTimeList() {
         return burnTimeList;
     }
 
-    public static HashMap<Material, Material> getFurnaceRecipes() {
+    public static Map<Material, Material> getFurnaceRecipes() {
         return furnaceRecipes;
     }
 }
