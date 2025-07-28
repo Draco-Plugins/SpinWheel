@@ -3,6 +3,8 @@ package sir_draco.spinwheel.furnaces;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Furnace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.FurnaceInventory;
@@ -33,24 +35,57 @@ public class CustomFurnace {
     }
 
     public void tickFurnace() {
-        if (getSmelting() == null) return;
-        if (fuel <= 0 && getFuel() == null) return;
+        if (getSmelting() == null) {
+            updateFurnaceVisualState(false);
+            return;
+        }
+        if (fuel <= 0 && getFuel() == null) {
+            updateFurnaceVisualState(false);
+            return;
+        }
 
         removeFuel();
 
         // Make sure the furnace can smelt the item
-        if (!CustomFurnaceChecker.getFurnaceRecipes().containsKey(getSmelting().getType())) return;
+        if (!CustomFurnaceChecker.getFurnaceRecipes().containsKey(getSmelting().getType())) {
+            updateFurnaceVisualState(false);
+            return;
+        }
         // Check if the furnace is already full
-        if (getResult() != null && getResult().getAmount() == 64) return;
+        if (getResult() != null && getResult().getAmount() == 64) {
+            updateFurnaceVisualState(false);
+            return;
+        }
         // Make sure the fuel is valid
-        if (getFuel() != null && !CustomFurnaceChecker.getBurnTimeList().containsKey(getFuel().getType())) return;
+        if (getFuel() != null && !CustomFurnaceChecker.getBurnTimeList().containsKey(getFuel().getType())) {
+            updateFurnaceVisualState(false);
+            return;
+        }
 
         // Fuel
         handleBurningFuel();
-        if (fuel == 0) return; // Out of fuel
+        if (fuel == 0) {
+            updateFurnaceVisualState(false);
+            return; // Out of fuel
+        }
+
+        // Furnace is actively smelting
+        updateFurnaceVisualState(true);
 
         // Cook item
         cookItem();
+    }
+
+    private void updateFurnaceVisualState(boolean shouldBeLit) {
+        if (!shouldBeLit) return;
+        Block block = location.getBlock();
+        if (block.getType() == Material.FURNACE && block.getState() instanceof Furnace furnaceState) {
+            // Set the furnace to appear lit
+            block.setType(Material.FURNACE);
+            furnaceState.setBurnTime((short) 2);
+            furnaceState.setCookTime((short) 0);
+            furnaceState.update();
+        }
     }
 
     private void handleBurningFuel() {

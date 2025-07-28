@@ -3,6 +3,7 @@ sir_draco\spinwheel\PlayerListener.class
 sir_draco\spinwheel\WheelStats.class
 sir_draco\spinwheel\commands\SpinsCommand.class
 sir_draco\spinwheel\furnaces\CustomFurnace.class
+sir_draco\spinwheel\furnaces\FurnaceListener$2.class
 sir_draco\spinwheel\TimeTracker.class
 sir_draco\spinwheel\commands\SpinTabComplete.class
 sir_draco\spinwheel\commands\SpinWheelCommand.class

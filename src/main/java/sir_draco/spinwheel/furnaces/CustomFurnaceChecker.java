@@ -1,21 +1,26 @@
 package sir_draco.spinwheel.furnaces;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Hopper;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.inventory.FurnaceRecipe;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.scheduler.BukkitRunnable;
 import sir_draco.spinwheel.SpinWheel;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.Map;
 
 public class CustomFurnaceChecker extends BukkitRunnable {
 
     private final SpinWheel plugin;
-    private static final HashMap<Material, Integer> burnTimeList = new HashMap<>();
-    private static final HashMap<Material, Material> furnaceRecipes = new HashMap<>();
+    private static final Map<Material, Integer> burnTimeList = new EnumMap<>(Material.class);
+    private static final Map<Material, Material> furnaceRecipes = new EnumMap<>(Material.class);
 
     public CustomFurnaceChecker(SpinWheel plugin) {
         this.plugin = plugin;
@@ -29,6 +34,43 @@ public class CustomFurnaceChecker extends BukkitRunnable {
         for (CustomFurnace furnace : plugin.getCustomFurnaces()) {
             if (furnace.getSmelting() == null || furnace.getSmelting().getType().isAir()) continue;
             furnace.tickFurnace();
+
+            // Check for hopper output after furnace ticking
+            checkForHopperOutput(furnace);
+        }
+    }
+
+    private void checkForHopperOutput(CustomFurnace furnace) {
+        // Only check if there's a result to output
+        if (furnace.getResult() == null || furnace.getResult().getAmount() <= 0) return;
+
+        // Look for a hopper below the furnace
+        Location hopperLocation = furnace.getLocation().clone().add(0, -1, 0);
+        Block hopperBlock = hopperLocation.getBlock();
+
+        if (hopperBlock.getType() == Material.HOPPER &&
+            hopperBlock.getState() instanceof Hopper hopper) {
+
+            // Get the furnace block state to use as the event source
+            Block furnaceBlock = furnace.getLocation().getBlock();
+            if (furnaceBlock.getState() instanceof org.bukkit.block.Furnace furnaceState) {
+
+                // Create an ItemStack representing what we want to move (1 item from result)
+                ItemStack resultItem = furnace.getResult().clone();
+                resultItem.setAmount(1);
+
+                // Create and call a fake InventoryMoveItemEvent using the furnace block's inventory
+                InventoryMoveItemEvent fakeEvent =
+                    new InventoryMoveItemEvent(
+                        furnaceState.getInventory(),  // source (furnace block's inventory)
+                        resultItem,                   // item being moved
+                        hopper.getInventory(),        // destination
+                        true                          // whether items can be taken
+                    );
+
+                // Call our event handler directly
+                plugin.getServer().getPluginManager().callEvent(fakeEvent);
+            }
         }
     }
 

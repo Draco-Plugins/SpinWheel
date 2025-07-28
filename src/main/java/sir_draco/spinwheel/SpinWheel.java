@@ -309,23 +309,27 @@ public final class SpinWheel extends JavaPlugin {
                 return;
             }
 
-            CustomFurnace customFurnace = new CustomFurnace(loc, furnaceData.getInt(key + TYPE));
-            customFurnace.setCanBreak(true);
-            BlockState state = furnace.getState();
-            if (state instanceof Furnace furnaceBlock) {
-                if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
-                if (furnaceBlock.getInventory().getSmelting() != null) customFurnace.getInventory().setSmelting(furnaceBlock.getInventory().getSmelting());
-                if (furnaceBlock.getInventory().getResult() != null) customFurnace.getInventory().setResult(furnaceBlock.getInventory().getResult());
-            }
-            customFurnaces.add(customFurnace);
-            furnaceIDs.put(loc, nextFurnaceID);
-            furnace.setMetadata("superFurnace", new FixedMetadataValue(this, furnaceData.getInt(key + TYPE)));
-            loadedLocations.add(loc);
-            nextFurnaceID++;
+            loadFurnacesHelper(key, loc, furnace, loadedLocations);
         });
 
         // Clean up any duplicate furnaces that might exist in memory
         cleanupDuplicateFurnaces();
+    }
+
+    private void loadFurnacesHelper(String key, Location loc, Block furnace, Set<Location> loadedLocations) {
+        CustomFurnace customFurnace = new CustomFurnace(loc, furnaceData.getInt(key + TYPE));
+        customFurnace.setCanBreak(true);
+        BlockState state = furnace.getState();
+        if (state instanceof Furnace furnaceBlock) {
+            if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
+            if (furnaceBlock.getInventory().getSmelting() != null) customFurnace.getInventory().setSmelting(furnaceBlock.getInventory().getSmelting());
+            if (furnaceBlock.getInventory().getResult() != null) customFurnace.getInventory().setResult(furnaceBlock.getInventory().getResult());
+        }
+        customFurnaces.add(customFurnace);
+        furnaceIDs.put(loc, nextFurnaceID);
+        furnace.setMetadata("superFurnace", new FixedMetadataValue(this, furnaceData.getInt(key + TYPE)));
+        loadedLocations.add(loc);
+        nextFurnaceID++;
     }
 
     /**

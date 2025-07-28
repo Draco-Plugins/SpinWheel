@@ -5,6 +5,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.Furnace;
+import org.bukkit.block.Hopper;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,6 +17,8 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.FurnaceStartSmeltEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.FurnaceInventory;
@@ -113,6 +118,23 @@ public class FurnaceListener implements Listener {
         placeCustomFurnace(e);
     }
 
+    @EventHandler
+    public void preventCustomFurnaceSmelting(FurnaceStartSmeltEvent e) {
+        CustomFurnace furnace = getCustomFurnace(e.getBlock());
+        if (furnace != null) {
+            // Clear the furnace contents to prevent smelting
+            Furnace furnaceBlock = (Furnace) e.getBlock().getState();
+            furnaceBlock.getInventory().clear();
+            furnaceBlock.update();
+        }
+    }
+
+    @EventHandler
+    public void handleHopperMovement(InventoryMoveItemEvent e) {
+        handleHopperInputToFurnace(e);
+        handleHopperOutputFromFurnace(e);
+    }
+
     private void placeCustomFurnace(BlockPlaceEvent e) {
         Bukkit.getLogger().log(Level.INFO,"[SpinWheel] Placing furnace");
         if (e.getItemInHand().getItemMeta() == null) return;
@@ -184,6 +206,180 @@ public class FurnaceListener implements Listener {
         int type = metaList.getFirst().asInt();
         e.setDropItems(false);
         e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), plugin.fastFurnace(type));
+    }
+
+    private void handleHopperInputToFurnace(InventoryMoveItemEvent e) {
+        if (!(e.getDestination().getHolder() instanceof Furnace furnaceBlock)) return;
+
+        CustomFurnace customFurnace = getCustomFurnace(furnaceBlock.getBlock());
+        if (customFurnace == null) return;
+
+        if (!(e.getSource().getHolder() instanceof Hopper hopper)) return;
+
+        ItemStack itemToMove = new ItemStack(e.getItem().getType(), 1);
+
+        BlockFace hopperDirection = getRelativeDirection(hopper.getBlock().getLocation(),
+                                                        furnaceBlock.getBlock().getLocation());
+
+        boolean canMove = false;
+        if (hopperDirection == BlockFace.UP) {
+            // Check if this item can go into the smelting slot
+            canMove = canAddToSmeltingSlot(customFurnace, itemToMove);
+        } else if (isHorizontalDirection(hopperDirection)) {
+            // Check if this item can go into the fuel slot
+            canMove = CustomFurnaceChecker.getBurnTimeList().containsKey(itemToMove.getType()) &&
+                     canAddToFuelSlot(customFurnace, itemToMove);
+        }
+
+        e.setCancelled(true);
+        if (canMove) {
+            // Add the item to the appropriate custom furnace slot
+            if (hopperDirection == BlockFace.UP) {
+                addToSmeltingSlot(customFurnace, itemToMove);
+            } else if (isHorizontalDirection(hopperDirection)) {
+                addToFuelSlot(customFurnace, itemToMove);
+            }
+
+            // Schedule the hopper inventory modification for next tick to avoid Spigot's temporary modification
+            // Store a reference to the original item for verification to prevent duplication
+            ItemStack originalEventItem = e.getItem().clone();
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    removeOneFromHopperDelayed(hopper, originalEventItem);
+                }
+            }.runTaskLater(plugin, 1);
+        }
+    }
+
+    private void handleHopperOutputFromFurnace(InventoryMoveItemEvent e) {
+        if (!(e.getSource().getHolder() instanceof Furnace furnaceBlock)) return;
+
+        CustomFurnace customFurnace = getCustomFurnace(furnaceBlock.getBlock());
+        if (customFurnace == null) return;
+
+        e.setCancelled(true);
+
+        ItemStack result = customFurnace.getResult();
+        if (result == null || result.getAmount() <= 0) return;
+
+        if (!(e.getDestination().getHolder() instanceof Hopper destinationHopper)) return;
+
+        BlockFace hopperDirection = getRelativeDirection(destinationHopper.getBlock().getLocation(),
+                                                        furnaceBlock.getBlock().getLocation());
+
+        if (hopperDirection == BlockFace.DOWN) {
+            transferResultToHopper(customFurnace, destinationHopper, result);
+        }
+    }
+
+    private void transferResultToHopper(CustomFurnace furnace, Hopper hopper, ItemStack result) {
+        ItemStack outputItem = result.clone();
+        outputItem.setAmount(1);
+
+        if (canHopperAcceptItem(hopper, outputItem)) {
+            addItemToHopper(hopper, outputItem);
+            if (result.getAmount() == 1) {
+                furnace.getInventory().setResult(null);
+            } else {
+                result.setAmount(result.getAmount() - 1);
+                furnace.getInventory().setResult(result);
+            }
+        }
+    }
+
+    private boolean isHorizontalDirection(BlockFace face) {
+        return face == BlockFace.NORTH || face == BlockFace.SOUTH ||
+               face == BlockFace.EAST || face == BlockFace.WEST;
+    }
+
+    private BlockFace getRelativeDirection(Location from, Location to) {
+        int dx = from.getBlockX() - to.getBlockX();
+        int dy = from.getBlockY() - to.getBlockY();
+        int dz = from.getBlockZ() - to.getBlockZ();
+
+        if (dy > 0) return BlockFace.UP;
+        if (dy < 0) return BlockFace.DOWN;
+        if (dx < 0) return BlockFace.EAST;
+        if (dx > 0) return BlockFace.WEST;
+        if (dz > 0) return BlockFace.SOUTH;
+        if (dz < 0) return BlockFace.NORTH;
+
+        return BlockFace.SELF;
+    }
+
+    private boolean canAddToSmeltingSlot(CustomFurnace furnace, ItemStack item) {
+        ItemStack current = furnace.getSmelting();
+        if (current == null) return true;
+        if (!current.getType().equals(item.getType())) return false;
+        return current.getAmount() < current.getMaxStackSize();
+    }
+
+    private void addToSmeltingSlot(CustomFurnace furnace, ItemStack item) {
+        ItemStack current = furnace.getSmelting();
+        if (current == null) {
+            furnace.getInventory().setSmelting(item.clone());
+        } else {
+            current.setAmount(current.getAmount() + item.getAmount());
+            furnace.getInventory().setSmelting(current);
+        }
+    }
+
+    private boolean canAddToFuelSlot(CustomFurnace furnace, ItemStack item) {
+        ItemStack current = furnace.getFuel();
+        if (current == null) return true;
+        if (!current.getType().equals(item.getType())) return false;
+        return current.getAmount() < current.getMaxStackSize();
+    }
+
+    private void addToFuelSlot(CustomFurnace furnace, ItemStack item) {
+        ItemStack current = furnace.getFuel();
+        if (current == null) {
+            furnace.getInventory().setFuel(item.clone());
+        } else {
+            current.setAmount(current.getAmount() + item.getAmount());
+            furnace.getInventory().setFuel(current);
+        }
+    }
+
+    private boolean canHopperAcceptItem(Hopper hopper, ItemStack item) {
+        for (ItemStack slot : hopper.getInventory().getContents()) {
+            if (slot == null) return true;
+            if (slot.getType().equals(item.getType()) && slot.getAmount() < slot.getMaxStackSize()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addItemToHopper(Hopper hopper, ItemStack item) {
+        hopper.getInventory().addItem(item);
+    }
+
+    // Remove a single matching item from the hopper inventory (delayed execution)
+    private void removeOneFromHopperDelayed(Hopper hopper, ItemStack originalEventItem) {
+        var inv = hopper.getInventory();
+
+        // Find the first stack that matches the original event item
+        for (int i = 0; i < inv.getSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (stack != null && stack.getType() == originalEventItem.getType()) {
+                // Safety check: only remove if the stack has items (prevents duplication)
+                if (stack.getAmount() > 0) {
+                    if (stack.getAmount() > 1) {
+                        ItemStack newStack = stack.clone();
+                        newStack.setAmount(stack.getAmount() - 1);
+                        inv.setItem(i, newStack);
+                    } else {
+                        inv.setItem(i, null);
+                    }
+                }
+                return;
+            }
+        }
+
+        Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Could not find item {0} in hopper for delayed removal",
+                originalEventItem.getType());
     }
 
     public CustomFurnace getCustomFurnace(Block block) {
