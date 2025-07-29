@@ -48,8 +48,12 @@ public class FurnaceListener implements Listener {
         if (e.getClickedBlock() == null) return;
         if (!e.getClickedBlock().getType().equals(Material.FURNACE)) return;
         if (!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) return;
+        // If the player is crouching and is trying to place a block do not open the furnace
+        if (e.getPlayer().isSneaking() && e.getItem() != null && e.getItem().getType().isBlock()) return;
+        // Make sure the event fires once
         if (e.getHand() == null) return;
         if (!e.getHand().equals(EquipmentSlot.HAND)) return;
+        // Make sure they are allowed to open the furnace
         if (plugin.isGriefPreventionEnabled() && plugin.checkForClaim(e.getPlayer(), e.getClickedBlock().getLocation())) return;
         CustomFurnace furnace = getCustomFurnace(e.getClickedBlock());
         if (furnace == null) return;
