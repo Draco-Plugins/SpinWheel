@@ -26,6 +26,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
+import sir_draco.spinwheel.utils.FileUtils;
+import sir_draco.spinwheel.utils.SpinUtils;
 import sir_draco.spinwheel.SpinWheel;
 
 import java.util.ArrayList;
@@ -54,7 +56,7 @@ public class FurnaceListener implements Listener {
         if (e.getHand() == null) return;
         if (!e.getHand().equals(EquipmentSlot.HAND)) return;
         // Make sure they are allowed to open the furnace
-        if (plugin.isGriefPreventionEnabled() && plugin.checkForClaim(e.getPlayer(), e.getClickedBlock().getLocation())) return;
+        if (plugin.isGriefPreventionEnabled() && SpinUtils.checkForClaim(e.getPlayer(), e.getClickedBlock().getLocation())) return;
         CustomFurnace furnace = getCustomFurnace(e.getClickedBlock());
         if (furnace == null) return;
         e.setCancelled(true);
@@ -93,7 +95,7 @@ public class FurnaceListener implements Listener {
     @EventHandler (ignoreCancelled = true)
     public void blockBreakEvent(BlockBreakEvent e) {
         if (!e.getBlock().getType().equals(Material.FURNACE)) return;
-        if (plugin.isGriefPreventionEnabled() && plugin.checkForClaim(e.getPlayer(), e.getBlock().getLocation())) return;
+        if (plugin.isGriefPreventionEnabled() && SpinUtils.checkForClaim(e.getPlayer(), e.getBlock().getLocation())) return;
         CustomFurnace furnace = getCustomFurnace(e.getBlock());
 
         // If we found a CustomFurnace object, handle it through the normal custom furnace removal
@@ -113,7 +115,7 @@ public class FurnaceListener implements Listener {
 
     @EventHandler
     public void placeFurnaceEvent(BlockPlaceEvent e) {
-        if (plugin.isGriefPreventionEnabled() && plugin.checkForClaim(e.getPlayer(), e.getBlock().getLocation())) {
+        if (plugin.isGriefPreventionEnabled() && SpinUtils.checkForClaim(e.getPlayer(), e.getBlock().getLocation())) {
             e.setCancelled(true);
             return;
         }
@@ -169,7 +171,8 @@ public class FurnaceListener implements Listener {
                 furnace.setCanBreak(true);
 
                 try {
-                    plugin.saveFurnace(location, model, plugin.getNextFurnaceID());
+                    FileUtils.saveFurnace(location, model, plugin.getNextFurnaceID(), plugin.getFurnaceData(),
+                                          plugin.getFurnaceFile());
                     plugin.incrementNextFurnaceID();
                 } catch (Exception ex) {
                     Bukkit.getLogger().warning("[SpinWheel] Failed to save furnace at " + location + ": " + ex.getMessage());
@@ -191,7 +194,7 @@ public class FurnaceListener implements Listener {
         if (furnace.getFuel() != null) newDrops.add(furnace.getFuel());
         if (furnace.getSmelting() != null) newDrops.add(furnace.getSmelting());
         if (furnace.getResult() != null) newDrops.add(furnace.getResult());
-        newDrops.add(plugin.fastFurnace(furnace.getSpeed()));
+        newDrops.add(SpinUtils.fastFurnace(furnace.getSpeed()));
 
         // Get and drop any items left in the base furnace block's inventory
         Block block = e.getBlock();
@@ -210,7 +213,7 @@ public class FurnaceListener implements Listener {
 
         int id = plugin.getFurnaceIDs().get(furnace.getLocation());
         try {
-            plugin.removeFurnace(id);
+            FileUtils.removeFurnace(id, plugin.getFurnaceData(), plugin.getFurnaceFile(), plugin.getFurnaceIDs());
         }
         catch (Exception ex) {
             Bukkit.getLogger().log(Level.WARNING, "[SpinWheel] Failed to remove furnace with ID: {0}", id);
@@ -223,7 +226,7 @@ public class FurnaceListener implements Listener {
         if (metaList.isEmpty()) return;
         int type = metaList.getFirst().asInt();
         e.setDropItems(false);
-        e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), plugin.fastFurnace(type));
+        e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), SpinUtils.fastFurnace(type));
     }
 
     private void handleHopperInputToFurnace(InventoryMoveItemEvent e) {

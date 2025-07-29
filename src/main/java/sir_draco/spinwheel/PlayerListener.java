@@ -18,6 +18,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import sir_draco.spinwheel.utils.FileUtils;
+import sir_draco.spinwheel.utils.SpinUtils;
 import sir_draco.spinwheel.wheel.WheelStats;
 
 @SuppressWarnings("deprecation")
@@ -31,7 +33,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void playerJoin(PlayerJoinEvent e) {
         if (!plugin.getSpinsStats().containsKey(e.getPlayer().getUniqueId())) {
-            plugin.loadSpins(e.getPlayer());
+            FileUtils.loadSpins(e.getPlayer(), plugin.getPlayerData(), plugin.getSpinsStats());
             return;
         }
         WheelStats stats = new WheelStats(1, 0, 0, 0, 0);
@@ -41,7 +43,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void playerQuit(PlayerQuitEvent e) {
         try {
-            plugin.saveSpins(e.getPlayer());
+            FileUtils.saveSpins(e.getPlayer(), plugin.getSpinsStats(), plugin.getPlayerData(), plugin.getDataFile());
         } catch (Exception ex) {
             Bukkit.getLogger().warning("Failed to save spins for player: " + e.getPlayer().getName());
         }
@@ -79,7 +81,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void placeCustomBlock(BlockPlaceEvent e) {
-        if (plugin.isGriefPreventionEnabled() && plugin.checkForClaim(e.getPlayer(), e.getBlock().getLocation())) {
+        if (plugin.isGriefPreventionEnabled() && SpinUtils.checkForClaim(e.getPlayer(), e.getBlock().getLocation())) {
             e.setCancelled(true);
             return;
         }

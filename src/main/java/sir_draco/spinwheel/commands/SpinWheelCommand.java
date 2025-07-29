@@ -9,6 +9,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import sir_draco.spinwheel.utils.FileUtils;
+import sir_draco.spinwheel.utils.SpinUtils;
 import sir_draco.spinwheel.SpinWheel;
 import sir_draco.spinwheel.wheel.Wheel;
 
@@ -65,7 +67,7 @@ public class SpinWheelCommand implements CommandExecutor {
         if (strings[0].equalsIgnoreCase("createwheel")) {
             if (plugin.getWheel() != null) plugin.getWheel().remove();
             plugin.setWheel(new Wheel(p.getLocation().getBlock().getLocation()));
-            plugin.saveWheel();
+            FileUtils.saveWheel();
             p.sendRawMessage(ChatColor.GREEN + "Wheel has been created");
             p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
             return true;
@@ -138,17 +140,17 @@ public class SpinWheelCommand implements CommandExecutor {
         else if (strings[0].equalsIgnoreCase("getreward")) {
             if (strings.length < 2) {
                 double chance = Math.random();
-                if (chance < 0.65) plugin.dropItem(p, getCommon(p), p.getLocation());
-                else if (chance < 0.9) plugin.dropItem(p, getRare(p), p.getLocation());
-                else if (chance < 0.99) plugin.dropItem(p, getEpic(p), p.getLocation());
-                else plugin.dropItem(p, getLegendary(p), p.getLocation());
+                if (chance < 0.65) SpinUtils.dropItem(p, getCommon(p), p.getLocation());
+                else if (chance < 0.9) SpinUtils.dropItem(p, getRare(p), p.getLocation());
+                else if (chance < 0.99) SpinUtils.dropItem(p, getEpic(p), p.getLocation());
+                else SpinUtils.dropItem(p, getLegendary(p), p.getLocation());
                 return true;
             }
 
-            if (strings[1].equalsIgnoreCase("common")) plugin.dropItem(p, getCommon(p), p.getLocation());
-            else if (strings[1].equalsIgnoreCase("rare")) plugin.dropItem(p, getRare(p), p.getLocation());
-            else if (strings[1].equalsIgnoreCase("epic")) plugin.dropItem(p, getEpic(p), p.getLocation());
-            else if (strings[1].equalsIgnoreCase("legendary")) plugin.dropItem(p, getLegendary(p), p.getLocation());
+            if (strings[1].equalsIgnoreCase("common")) SpinUtils.dropItem(p, getCommon(p), p.getLocation());
+            else if (strings[1].equalsIgnoreCase("rare")) SpinUtils.dropItem(p, getRare(p), p.getLocation());
+            else if (strings[1].equalsIgnoreCase("epic")) SpinUtils.dropItem(p, getEpic(p), p.getLocation());
+            else if (strings[1].equalsIgnoreCase("legendary")) SpinUtils.dropItem(p, getLegendary(p), p.getLocation());
             else {
                 p.sendRawMessage(ChatColor.RED + "Usage: /spinwheel getreward <common|rare|epic|legendary>");
                 p.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
@@ -240,7 +242,7 @@ public class SpinWheelCommand implements CommandExecutor {
             }
 
             if (strings.length == 1) {
-                ItemStack item = plugin.fastFurnace(1);
+                ItemStack item = SpinUtils.fastFurnace(1);
                 p.getInventory().addItem(item);
                 p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
                 return true;
@@ -262,7 +264,7 @@ public class SpinWheelCommand implements CommandExecutor {
                 return false;
             }
 
-            p.getInventory().addItem(plugin.fastFurnace(type));
+            p.getInventory().addItem(SpinUtils.fastFurnace(type));
             p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
             return true;
         }
@@ -276,24 +278,24 @@ public class SpinWheelCommand implements CommandExecutor {
     public ItemStack getCommon(Player p) {
         p.sendRawMessage(ChatColor.GREEN + "You have received a common item");
         p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-        return plugin.getCommonItems().get(plugin.randomSlot(plugin.getCommonItems().size()));
+        return plugin.getCommonItems().get(SpinUtils.randomSlot(plugin.getCommonItems().size()));
     }
 
     public ItemStack getRare(Player p) {
         p.sendRawMessage(ChatColor.GREEN + "You have received a rare item");
         p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-        return plugin.getRareItems().get(plugin.randomSlot(plugin.getRareItems().size()));
+        return plugin.getRareItems().get(SpinUtils.randomSlot(plugin.getRareItems().size()));
     }
 
     public ItemStack getEpic(Player p) {
         p.sendRawMessage(ChatColor.GREEN + "You have received an epic item");
         p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-        return plugin.getEpicItems().get(plugin.randomSlot(plugin.getEpicItems().size()));
+        return plugin.getEpicItems().get(SpinUtils.randomSlot(plugin.getEpicItems().size()));
     }
 
     public ItemStack getLegendary(Player p) {
         p.sendRawMessage(ChatColor.GREEN + "You have received a legendary item");
         p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
-        return plugin.getLegendaryItems().get(plugin.randomSlot(plugin.getLegendaryItems().size()));
+        return plugin.getLegendaryItems().get(SpinUtils.randomSlot(plugin.getLegendaryItems().size()));
     }
 }
