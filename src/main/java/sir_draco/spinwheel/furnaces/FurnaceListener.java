@@ -188,6 +188,20 @@ public class FurnaceListener implements Listener {
         if (furnace.getSmelting() != null) newDrops.add(furnace.getSmelting());
         if (furnace.getResult() != null) newDrops.add(furnace.getResult());
         newDrops.add(plugin.fastFurnace(furnace.getSpeed()));
+
+        // Get and drop any items left in the base furnace block's inventory
+        Block block = e.getBlock();
+        if (block.getState() instanceof Furnace furnaceBlock) {
+            FurnaceInventory inv = furnaceBlock.getInventory();
+            for (ItemStack item : inv.getContents()) {
+                if (item != null && item.getType() != Material.AIR) {
+                    newDrops.add(item);
+                }
+            }
+            inv.clear(); // Clear the inventory to avoid duplication
+            furnaceBlock.update();
+        }
+
         for (ItemStack drop : newDrops) e.getBlock().getWorld().dropItemNaturally(e.getBlock().getLocation(), drop);
 
         int id = plugin.getFurnaceIDs().get(furnace.getLocation());
