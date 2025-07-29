@@ -18,6 +18,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import sir_draco.spinwheel.wheel.WheelStats;
 
 @SuppressWarnings("deprecation")
 public class PlayerListener implements Listener {

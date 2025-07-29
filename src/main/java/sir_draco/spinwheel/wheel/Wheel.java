@@ -1,4 +1,4 @@
-package sir_draco.spinwheel;
+package sir_draco.spinwheel.wheel;
 
 import org.bukkit.Location;
 import org.bukkit.Material;

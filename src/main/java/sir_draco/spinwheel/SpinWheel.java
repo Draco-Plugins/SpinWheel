@@ -26,6 +26,9 @@ import sir_draco.spinwheel.commands.*;
 import sir_draco.spinwheel.furnaces.CustomFurnace;
 import sir_draco.spinwheel.furnaces.CustomFurnaceChecker;
 import sir_draco.spinwheel.furnaces.FurnaceListener;
+import sir_draco.spinwheel.wheel.TimeTracker;
+import sir_draco.spinwheel.wheel.Wheel;
+import sir_draco.spinwheel.wheel.WheelStats;
 
 import java.io.File;
 import java.io.IOException;

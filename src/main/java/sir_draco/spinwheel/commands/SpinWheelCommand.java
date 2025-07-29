@@ -10,7 +10,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import sir_draco.spinwheel.SpinWheel;
-import sir_draco.spinwheel.Wheel;
+import sir_draco.spinwheel.wheel.Wheel;
 
 import java.io.File;
 

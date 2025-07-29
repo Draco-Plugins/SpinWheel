@@ -8,9 +8,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
-import sir_draco.spinwheel.SpinTimer;
+import sir_draco.spinwheel.wheel.SpinTimer;
 import sir_draco.spinwheel.SpinWheel;
-import sir_draco.spinwheel.WheelStats;
+import sir_draco.spinwheel.wheel.WheelStats;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;

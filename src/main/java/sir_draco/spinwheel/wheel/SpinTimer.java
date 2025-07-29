@@ -1,11 +1,11 @@
-package sir_draco.spinwheel;
+package sir_draco.spinwheel.wheel;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import sir_draco.spinwheel.SpinWheel;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
