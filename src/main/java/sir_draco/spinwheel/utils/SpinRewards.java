@@ -3,8 +3,8 @@ package sir_draco.spinwheel.utils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -98,19 +98,7 @@ public class SpinRewards {
         list.add(SpinUtils.fastFurnace(2));
         list.add(SpinUtils.fastFurnace(3));
 
-        int rand = SpinUtils.randomSlot(entityTypes.size());
-        ItemStack spawner = new ItemStack(Material.SPAWNER, 1);
-        ItemMeta meta = spawner.getItemMeta();
-        if (meta == null) return;
-        meta.setLore(null);
-        ArrayList<String> lore = new ArrayList<>();
-        lore.add("");
-        lore.add(ChatColor.GRAY + entityTypes.get(rand).toString());
-        lore.add(ChatColor.RED + "YOU CAN NOT PICK THIS UP ONCE YOU PUT IT DOWN!");
-        meta.setCustomModelData(rand);
-        meta.setLore(lore);
-        spawner.setItemMeta(meta);
-        list.add(spawner);
+        list.add(getSpawner(entityTypes));
 
         list.add(new ItemStack(Material.WITHER_SKELETON_SKULL, 3));
         list.add(new ItemStack(Material.TRIDENT, 1));
@@ -125,8 +113,8 @@ public class SpinRewards {
         list.add(new ItemStack(Material.MACE, 1));
 
         ItemStack horseBale = new ItemStack(Material.HAY_BLOCK, 1);
-        meta = horseBale.getItemMeta();
-        lore = new ArrayList<>();
+        ItemMeta meta = horseBale.getItemMeta();
+        List<String> lore = new ArrayList<>();
         lore.add(ChatColor.GRAY + "Spawns a horse with max stats (vanilla)");
         lore.add(ChatColor.RED + "You can't use it in spawn");
         if (meta == null) return;
@@ -144,19 +132,7 @@ public class SpinRewards {
         }
         list.add(SpinUtils.fastFurnace(4));
 
-        ItemStack spawner = new ItemStack(Material.SPAWNER, 3);
-        int rand = SpinUtils.randomSlot(entityTypes.size());
-        ItemMeta meta = spawner.getItemMeta();
-        ArrayList<String> lore = new ArrayList<>();
-        lore.add("");
-        lore.add(ChatColor.GOLD + "Super Spawner");
-        lore.add(ChatColor.GRAY + entityTypes.get(rand).toString());
-        lore.add(ChatColor.RED + "YOU CAN NOT PICK THIS UP ONCE YOU PUT IT DOWN!");
-        if (meta == null) return;
-        meta.setCustomModelData(rand + 100);
-        meta.setLore(lore);
-        spawner.setItemMeta(meta);
-        list.add(spawner);
+        list.add(getSuperSpawner(entityTypes, 3));
 
         list.add(SpinUtils.diamondMax(Material.DIAMOND_PICKAXE, false));
         list.add(SpinUtils.diamondMax(Material.DIAMOND_AXE, false));
@@ -175,12 +151,26 @@ public class SpinRewards {
         ItemStack spawner = new ItemStack(Material.SPAWNER, 1);
         ItemMeta meta = spawner.getItemMeta();
         if (meta == null) return spawner;
-        meta.setLore(null);
+        meta.setDisplayName(ChatColor.LIGHT_PURPLE + SpinUtils.makeReadableName(entityTypes.get(rand).toString()) + " Spawner");
         ArrayList<String> lore = new ArrayList<>();
-        lore.add("");
-        lore.add(ChatColor.GRAY + entityTypes.get(rand).toString());
         lore.add(ChatColor.RED + "YOU CAN NOT PICK THIS UP ONCE YOU PUT IT DOWN!");
         meta.setCustomModelData(rand);
+        meta.setLore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        spawner.setItemMeta(meta);
+        return spawner;
+    }
+
+    public static ItemStack getSuperSpawner(List<EntityType> entityTypes, int amount) {
+        int rand = SpinUtils.randomSlot(entityTypes.size());
+        ItemStack spawner = new ItemStack(Material.SPAWNER, amount);
+        ItemMeta meta = spawner.getItemMeta();
+        if (meta == null) return spawner;
+        meta.setDisplayName(ChatColor.GOLD + "Super Spawner");
+        ArrayList<String> lore = new ArrayList<>();
+        lore.add(ChatColor.RED + "YOU CAN NOT PICK THIS UP ONCE YOU PUT IT DOWN!");
+        meta.setCustomModelData(rand + 100);
         meta.setLore(lore);
         spawner.setItemMeta(meta);
         return spawner;

@@ -303,4 +303,29 @@ public class SpinUtils {
     public static int randomSlot(int max) {
         return RANDOM.nextInt(max);
     }
+
+    /**
+     * Converts a string to a readable name by replacing underscores with spaces and capitalizing the first letter of each word.
+     * @param name The input string, typically in snake_case format.
+     * @return A human-readable version of the input string.
+     */
+    public static String makeReadableName(String name) {
+        if (name == null || name.isEmpty()) {
+            return "";
+        }
+
+        String[] words = name.split("_");
+        StringBuilder readableName = new StringBuilder();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                readableName.append(Character.toUpperCase(word.charAt(0)))
+                            .append(word.substring(1).toLowerCase())
+                            .append(" ");
+            }
+        }
+
+        // Remove the trailing space and return the result
+        return readableName.toString().trim();
+    }
 }
