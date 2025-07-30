@@ -7,14 +7,17 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.TabCompleteEvent;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class SpinTabComplete implements Listener {
 
-    public SpinTabComplete() {}
+    public SpinTabComplete() {
+        // Register the listener
+    }
 
     @EventHandler
     public void onTabComplete(TabCompleteEvent e) {
-        ArrayList<String> words = new ArrayList<>();
+        List<String> words = new ArrayList<>();
         String buffer = e.getBuffer();
         Player p = (Player) e.getSender();
         if (buffer.contains("spinwheel getreward ") || buffer.contains("sw getreward ")) words = getSpinTypes();
@@ -30,7 +33,7 @@ public class SpinTabComplete implements Listener {
         e.setCompletions(getCompletions(buffer, words));
     }
 
-    public ArrayList<String> getCompletions(String buffer, ArrayList<String> words) {
+    public List<String> getCompletions(String buffer, List<String> words) {
         ArrayList<String> completions = new ArrayList<>();
         String[] segment = buffer.split(" ");
 
@@ -47,7 +50,7 @@ public class SpinTabComplete implements Listener {
         return true;
     }
 
-    public ArrayList<String> getSpinTypes() {
+    public List<String> getSpinTypes() {
         ArrayList<String> words = new ArrayList<>();
         words.add("common");
         words.add("epic");
@@ -56,7 +59,7 @@ public class SpinTabComplete implements Listener {
         return words;
     }
 
-    public ArrayList<String> getSpinCommands() {
+    public List<String> getSpinCommands() {
         ArrayList<String> words = new ArrayList<>();
         words.add("createwheel");
         words.add("endloot");
@@ -67,10 +70,11 @@ public class SpinTabComplete implements Listener {
         words.add("resetstats");
         words.add("settime");
         words.add("superfurnace");
+        words.add("spawner");
         return words;
     }
 
-    public ArrayList<String> getPlayers() {
+    public List<String> getPlayers() {
         ArrayList<String> words = new ArrayList<>();
         for (Player p : Bukkit.getOnlinePlayers()) words.add(p.getName());
         return words;

@@ -3,6 +3,7 @@ package sir_draco.spinwheel.utils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -167,5 +168,21 @@ public class SpinRewards {
         list.add(SpinUtils.diamondMax(Material.DIAMOND_BOOTS, false));
         list.add(SpinUtils.diamondMax(Material.BOW, false));
         list.add(SpinUtils.diamondMax(Material.DIAMOND_PICKAXE, true));
+    }
+
+    public static ItemStack getSpawner(List<EntityType> entityTypes) {
+        int rand = SpinUtils.randomSlot(entityTypes.size());
+        ItemStack spawner = new ItemStack(Material.SPAWNER, 1);
+        ItemMeta meta = spawner.getItemMeta();
+        if (meta == null) return spawner;
+        meta.setLore(null);
+        ArrayList<String> lore = new ArrayList<>();
+        lore.add("");
+        lore.add(ChatColor.GRAY + entityTypes.get(rand).toString());
+        lore.add(ChatColor.RED + "YOU CAN NOT PICK THIS UP ONCE YOU PUT IT DOWN!");
+        meta.setCustomModelData(rand);
+        meta.setLore(lore);
+        spawner.setItemMeta(meta);
+        return spawner;
     }
 }
