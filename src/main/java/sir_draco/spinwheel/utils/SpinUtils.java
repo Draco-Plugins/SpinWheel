@@ -251,7 +251,7 @@ public class SpinUtils {
             item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
             item.addUnsafeEnchantment(Enchantment.KNOCKBACK, 4);
             item.addUnsafeEnchantment(Enchantment.FIRE_ASPECT, 4);
-            item.addUnsafeEnchantment(Enchantment.LOOTING, 4);
+            item.addUnsafeEnchantment(Enchantment.LOOTING, 6);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
         }
         else if (mat.equals(Material.DIAMOND_HELMET)) {
