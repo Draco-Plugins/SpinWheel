@@ -167,7 +167,7 @@ public class SpinRewards {
         ItemStack spawner = new ItemStack(Material.SPAWNER, amount);
         ItemMeta meta = spawner.getItemMeta();
         if (meta == null) return spawner;
-        meta.setDisplayName(ChatColor.GOLD + "Super Spawner");
+        meta.setDisplayName(ChatColor.GOLD + SpinUtils.makeReadableName(entityTypes.get(rand).toString()) + " Super Spawner");
         ArrayList<String> lore = new ArrayList<>();
         lore.add(ChatColor.RED + "YOU CAN NOT PICK THIS UP ONCE YOU PUT IT DOWN!");
         meta.setCustomModelData(rand + 100);
