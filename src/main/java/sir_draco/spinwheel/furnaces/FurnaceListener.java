@@ -281,16 +281,24 @@ public class FurnaceListener implements Listener {
 
         e.setCancelled(true);
 
-        ItemStack result = customFurnace.getResult();
-        if (result == null || result.getAmount() <= 0) return;
-
         if (!(e.getDestination().getHolder() instanceof Hopper destinationHopper)) return;
 
         BlockFace hopperDirection = getRelativeDirection(destinationHopper.getBlock().getLocation(),
                                                         furnaceBlock.getBlock().getLocation());
 
         if (hopperDirection == BlockFace.DOWN) {
-            transferResultToHopper(customFurnace, destinationHopper, result);
+            // Try to transfer result items first
+            ItemStack result = customFurnace.getResult();
+            if (result != null && result.getAmount() > 0) {
+                transferResultToHopper(customFurnace, destinationHopper, result);
+                return; // Prioritize result items over buckets
+            }
+
+            // If no result items, try to transfer empty buckets from fuel slot
+            ItemStack fuel = customFurnace.getFuel();
+            if (fuel != null && fuel.getType() == Material.BUCKET) {
+                transferBucketToHopper(customFurnace, destinationHopper, fuel);
+            }
         }
     }
 
@@ -305,6 +313,21 @@ public class FurnaceListener implements Listener {
             } else {
                 result.setAmount(result.getAmount() - 1);
                 furnace.getInventory().setResult(result);
+            }
+        }
+    }
+
+    private void transferBucketToHopper(CustomFurnace furnace, Hopper hopper, ItemStack bucket) {
+        ItemStack bucketItem = bucket.clone();
+        bucketItem.setAmount(1);
+
+        if (canHopperAcceptItem(hopper, bucketItem)) {
+            addItemToHopper(hopper, bucketItem);
+            if (bucket.getAmount() == 1) {
+                furnace.getInventory().setFuel(null);
+            } else {
+                bucket.setAmount(bucket.getAmount() - 1);
+                furnace.getInventory().setFuel(bucket);
             }
         }
     }

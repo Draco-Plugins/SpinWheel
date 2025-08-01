@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.Furnace;
 import org.bukkit.block.Hopper;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.inventory.FurnaceRecipe;
@@ -41,9 +42,6 @@ public class CustomFurnaceChecker extends BukkitRunnable {
     }
 
     private void checkForHopperOutput(CustomFurnace furnace) {
-        // Only check if there's a result to output
-        if (furnace.getResult() == null || furnace.getResult().getAmount() <= 0) return;
-
         // Look for a hopper below the furnace
         Location hopperLocation = furnace.getLocation().clone().add(0, -1, 0);
         Block hopperBlock = hopperLocation.getBlock();
@@ -55,23 +53,40 @@ public class CustomFurnaceChecker extends BukkitRunnable {
             Block furnaceBlock = furnace.getLocation().getBlock();
             if (furnaceBlock.getState() instanceof org.bukkit.block.Furnace furnaceState) {
 
-                // Create an ItemStack representing what we want to move (1 item from result)
-                ItemStack resultItem = furnace.getResult().clone();
-                resultItem.setAmount(1);
+                // Check for result items to output
+                if (furnace.getResult() != null && furnace.getResult().getAmount() > 0) {
+                    // Create an ItemStack representing what we want to move (1 item from result)
+                    ItemStack resultItem = furnace.getResult().clone();
+                    resultItem.setAmount(1);
 
-                // Create and call a fake InventoryMoveItemEvent using the furnace block's inventory
-                InventoryMoveItemEvent fakeEvent =
-                    new InventoryMoveItemEvent(
-                        furnaceState.getInventory(),  // source (furnace block's inventory)
-                        resultItem,                   // item being moved
-                        hopper.getInventory(),        // destination
-                        true                          // whether items can be taken
-                    );
+                    // Create and call a fake InventoryMoveItemEvent using the furnace block's inventory
+                    callMoveItemEvent(hopper, furnaceState, resultItem);
+                }
 
-                // Call our event handler directly
-                plugin.getServer().getPluginManager().callEvent(fakeEvent);
+                // Check for empty buckets in fuel slot to output
+                ItemStack fuel = furnace.getFuel();
+                if (fuel != null && fuel.getType() == Material.BUCKET) {
+                    // Create an ItemStack representing the bucket to move
+                    ItemStack bucketItem = new ItemStack(Material.BUCKET, 1);
+
+                    // Create and call a fake InventoryMoveItemEvent for the bucket
+                    callMoveItemEvent(hopper, furnaceState, bucketItem);
+                }
             }
         }
+    }
+
+    private void callMoveItemEvent(Hopper hopper, Furnace furnaceState, ItemStack bucketItem) {
+        InventoryMoveItemEvent fakeEvent =
+            new InventoryMoveItemEvent(
+                furnaceState.getInventory(),  // source (furnace block's inventory)
+                    bucketItem,                   // item being moved (bucket)
+                hopper.getInventory(),        // destination
+                true                          // whether items can be taken
+            );
+
+        // Call our event handler directly
+        plugin.getServer().getPluginManager().callEvent(fakeEvent);
     }
 
     public void createBurnTimeList() {
