@@ -142,7 +142,6 @@ public class FurnaceListener implements Listener {
     }
 
     private void placeCustomFurnace(BlockPlaceEvent e) {
-        Bukkit.getLogger().log(Level.INFO,"[SpinWheel] Placing furnace");
         if (e.getItemInHand().getItemMeta() == null) return;
         if (!e.getItemInHand().getItemMeta().hasCustomModelData()) return;
         int model = e.getItemInHand().getItemMeta().getCustomModelData();
@@ -157,8 +156,6 @@ public class FurnaceListener implements Listener {
             e.getPlayer().sendMessage(ChatColor.RED + "A custom furnace already exists at this location!");
             return;
         }
-
-        Bukkit.getLogger().log(Level.INFO, "[SpinWheel] Placing custom furnace with model {0}", model);
 
         CustomFurnace furnace = new CustomFurnace(location, model);
         plugin.getCustomFurnaces().add(furnace);
