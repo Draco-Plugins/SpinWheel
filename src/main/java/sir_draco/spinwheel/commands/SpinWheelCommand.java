@@ -19,6 +19,7 @@ import java.io.File;
 
 public class SpinWheelCommand implements CommandExecutor {
 
+    public static final String NO_SPACE = "You have no open inventory spaces";
     private final SpinWheel plugin;
 
     public SpinWheelCommand(SpinWheel plugin) {
@@ -71,6 +72,9 @@ public class SpinWheelCommand implements CommandExecutor {
         else if (strings[0].equalsIgnoreCase("spawner")) {
             return giveSpawner(p);
         }
+        else if (strings[0].equalsIgnoreCase("superspawner")) {
+            return giveSuperSpawner(p);
+        }
 
         p.sendRawMessage(ChatColor.RED + "Usage: /spinwheel <createwheel|removewheel|endloot|settime|getreward|" +
                 "givespin|opspin|resetstats|superfurnace>");
@@ -80,7 +84,7 @@ public class SpinWheelCommand implements CommandExecutor {
 
     private boolean superFurnace(String[] strings, Player p) {
         if (p.getInventory().firstEmpty() == -1) {
-            p.sendRawMessage(ChatColor.RED + "You have no open inventory spaces");
+            p.sendRawMessage(ChatColor.RED + NO_SPACE);
             p.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
             return true;
         }
@@ -321,12 +325,24 @@ public class SpinWheelCommand implements CommandExecutor {
 
     private boolean giveSpawner(Player p) {
         if (p.getInventory().firstEmpty() == -1) {
-            p.sendRawMessage(ChatColor.RED + "You have no open inventory spaces");
+            p.sendRawMessage(ChatColor.RED + NO_SPACE);
             p.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
             return false;
         }
 
         p.getInventory().addItem(SpinRewards.getSpawner(SpinWheel.getInstance().getEntityTypes()));
+        p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
+        return true;
+    }
+
+    private  boolean giveSuperSpawner(Player p) {
+        if (p.getInventory().firstEmpty() == -1) {
+            p.sendRawMessage(ChatColor.RED + NO_SPACE);
+            p.playSound(p, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+            return false;
+        }
+
+        p.getInventory().addItem(SpinRewards.getSuperSpawner(SpinWheel.getInstance().getEntityTypes(), 3));
         p.playSound(p, Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
         return true;
     }

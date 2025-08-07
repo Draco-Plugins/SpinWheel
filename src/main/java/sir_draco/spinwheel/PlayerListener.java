@@ -104,11 +104,12 @@ public class PlayerListener implements Listener {
             spawner.setMaxSpawnDelay(50);
             spawner.setMaxNearbyEntities(6);
             spawner.setRequiredPlayerRange(16);
-            spawner.update();
+            spawner.update(true);
+            return;
         }
         CreatureSpawner spawner = (CreatureSpawner) e.getBlockPlaced().getState();
         spawner.setSpawnedType(plugin.getEntityTypes().get(model));
-        spawner.update();
+        spawner.update(true);
     }
 
     @EventHandler (ignoreCancelled = true)
