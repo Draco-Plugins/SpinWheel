@@ -176,6 +176,9 @@ public class FileUtils {
             if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
             if (furnaceBlock.getInventory().getSmelting() != null) customFurnace.getInventory().setSmelting(furnaceBlock.getInventory().getSmelting());
             if (furnaceBlock.getInventory().getResult() != null) customFurnace.getInventory().setResult(furnaceBlock.getInventory().getResult());
+            furnaceBlock.getInventory().setFuel(null);
+            furnaceBlock.getInventory().setSmelting(null);
+            furnaceBlock.getInventory().setResult(null);
         }
         customFurnaces.add(customFurnace);
         furnaceIDs.put(loc, SpinWheel.getInstance().getNextFurnaceID());
