@@ -60,7 +60,7 @@ public class FileUtils {
         }
 
         if (!success) {
-            WheelStats stats = new WheelStats(0, 0, 0, 0, 0);
+            WheelStats stats = new WheelStats(3, 0, 0, 0, 0);
             spinsStats.put(p.getUniqueId(), stats);
             return;
         }

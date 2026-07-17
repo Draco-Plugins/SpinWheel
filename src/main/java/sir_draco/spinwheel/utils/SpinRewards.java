@@ -82,7 +82,7 @@ public class SpinRewards {
         list.add(new ItemStack(Material.DIAMOND_CHESTPLATE, 1));
         list.add(new ItemStack(Material.DIAMOND_LEGGINGS, 1));
         list.add(new ItemStack(Material.DIAMOND_BOOTS, 1));
-        list.add(new ItemStack(Material.ANCIENT_DEBRIS, 3));
+        list.add(new ItemStack(Material.ANCIENT_DEBRIS, 2));
         list.add(new ItemStack(Material.WITHER_SKELETON_SKULL, 1));
         list.add(new ItemStack(Material.IRON_HORSE_ARMOR, 1));
         list.add(new ItemStack(Material.GOLDEN_HORSE_ARMOR, 1));
