@@ -1,2 +1,5 @@
 /.idea
 SpinWheel.iml
+AGENTS.md
+.agents/*
+.opencode/*

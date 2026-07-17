@@ -226,73 +226,73 @@ public class SpinUtils {
         ItemStack item;
         if (mat.equals(Material.DIAMOND_PICKAXE)) {
             item = new ItemStack(Material.DIAMOND_PICKAXE);
-            item.addUnsafeEnchantment(Enchantment.EFFICIENCY, 8);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
+            item.addUnsafeEnchantment(Enchantment.EFFICIENCY, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
 
             if (alternative) item.addUnsafeEnchantment(Enchantment.SILK_TOUCH, 1);
-            else item.addUnsafeEnchantment(Enchantment.FORTUNE, 6);
+            else item.addUnsafeEnchantment(Enchantment.FORTUNE, 4);
         }
         else if (mat.equals(Material.DIAMOND_AXE)) {
             item = new ItemStack(Material.DIAMOND_AXE);
-            item.addUnsafeEnchantment(Enchantment.EFFICIENCY, 8);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
+            item.addUnsafeEnchantment(Enchantment.EFFICIENCY, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
         }
         else if (mat.equals(Material.DIAMOND_SHOVEL)) {
             item = new ItemStack(Material.DIAMOND_SHOVEL);
-            item.addUnsafeEnchantment(Enchantment.EFFICIENCY, 8);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
+            item.addUnsafeEnchantment(Enchantment.EFFICIENCY, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
         }
         else if (mat.equals(Material.DIAMOND_SWORD)) {
             item = new ItemStack(Material.DIAMOND_SWORD);
-            item.addUnsafeEnchantment(Enchantment.SHARPNESS, 8);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
-            item.addUnsafeEnchantment(Enchantment.KNOCKBACK, 4);
-            item.addUnsafeEnchantment(Enchantment.FIRE_ASPECT, 4);
-            item.addUnsafeEnchantment(Enchantment.LOOTING, 6);
+            item.addUnsafeEnchantment(Enchantment.SHARPNESS, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
+            item.addUnsafeEnchantment(Enchantment.KNOCKBACK, 3);
+            item.addUnsafeEnchantment(Enchantment.FIRE_ASPECT, 3);
+            item.addUnsafeEnchantment(Enchantment.LOOTING, 4);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
         }
         else if (mat.equals(Material.DIAMOND_HELMET)) {
             item = new ItemStack(Material.DIAMOND_HELMET);
-            item.addUnsafeEnchantment(Enchantment.PROTECTION, 7);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
-            item.addUnsafeEnchantment(Enchantment.THORNS, 6);
-            item.addUnsafeEnchantment(Enchantment.RESPIRATION, 6);
+            item.addUnsafeEnchantment(Enchantment.PROTECTION, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
+            item.addUnsafeEnchantment(Enchantment.THORNS, 4);
+            item.addUnsafeEnchantment(Enchantment.RESPIRATION, 4);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
             item.addUnsafeEnchantment(Enchantment.AQUA_AFFINITY, 1);
         }
         else if (mat.equals(Material.DIAMOND_CHESTPLATE)) {
             item = new ItemStack(Material.DIAMOND_CHESTPLATE);
-            item.addUnsafeEnchantment(Enchantment.PROTECTION, 7);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
-            item.addUnsafeEnchantment(Enchantment.THORNS, 6);
+            item.addUnsafeEnchantment(Enchantment.PROTECTION, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
+            item.addUnsafeEnchantment(Enchantment.THORNS, 4);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
         }
         else if (mat.equals(Material.DIAMOND_LEGGINGS)) {
             item = new ItemStack(Material.DIAMOND_LEGGINGS);
-            item.addUnsafeEnchantment(Enchantment.PROTECTION, 7);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
-            item.addUnsafeEnchantment(Enchantment.THORNS, 6);
-            item.addUnsafeEnchantment(Enchantment.SWIFT_SNEAK, 6);
+            item.addUnsafeEnchantment(Enchantment.PROTECTION, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
+            item.addUnsafeEnchantment(Enchantment.THORNS, 4);
+            item.addUnsafeEnchantment(Enchantment.SWIFT_SNEAK, 4);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
         }
         else if (mat.equals(Material.DIAMOND_BOOTS)) {
             item = new ItemStack(Material.DIAMOND_BOOTS);
-            item.addUnsafeEnchantment(Enchantment.PROTECTION, 7);
-            item.addUnsafeEnchantment(Enchantment.FEATHER_FALLING, 7);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
-            item.addUnsafeEnchantment(Enchantment.THORNS, 6);
-            item.addUnsafeEnchantment(Enchantment.SOUL_SPEED, 6);
-            item.addUnsafeEnchantment(Enchantment.DEPTH_STRIDER, 6);
+            item.addUnsafeEnchantment(Enchantment.PROTECTION, 6);
+            item.addUnsafeEnchantment(Enchantment.FEATHER_FALLING, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
+            item.addUnsafeEnchantment(Enchantment.THORNS, 4);
+            item.addUnsafeEnchantment(Enchantment.SOUL_SPEED, 4);
+            item.addUnsafeEnchantment(Enchantment.DEPTH_STRIDER, 4);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
         }
         else {
             item = new ItemStack(Material.BOW);
-            item.addUnsafeEnchantment(Enchantment.POWER, 8);
-            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 6);
-            item.addUnsafeEnchantment(Enchantment.PUNCH, 4);
+            item.addUnsafeEnchantment(Enchantment.POWER, 6);
+            item.addUnsafeEnchantment(Enchantment.UNBREAKING, 4);
+            item.addUnsafeEnchantment(Enchantment.PUNCH, 3);
             item.addUnsafeEnchantment(Enchantment.MENDING, 1);
             item.addUnsafeEnchantment(Enchantment.INFINITY, 1);
             item.addUnsafeEnchantment(Enchantment.FLAME, 1);
