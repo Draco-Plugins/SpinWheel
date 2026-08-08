@@ -11,6 +11,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.FurnaceInventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import sir_draco.spinwheel.SpinWheel;
 import sir_draco.spinwheel.furnaces.CustomFurnace;
@@ -31,6 +32,10 @@ public class FileUtils {
     public static final String LEGENDARY = ".Legendary";
     public static final String LOCATION = ".Location";
     public static final String TYPE = ".Type";
+    public static final String INVENTORY_PERSISTED = ".InventoryPersisted";
+    public static final String FUEL = ".Fuel";
+    public static final String SMELTING = ".Smelting";
+    public static final String RESULT = ".Result";
 
     private FileUtils() {
         // Prevent instantiation
@@ -173,18 +178,36 @@ public class FileUtils {
         customFurnace.setCanBreak(true);
         BlockState state = furnace.getState();
         if (state instanceof Furnace furnaceBlock) {
-            if (furnaceBlock.getInventory().getFuel() != null) customFurnace.getInventory().setFuel(furnaceBlock.getInventory().getFuel());
-            if (furnaceBlock.getInventory().getSmelting() != null) customFurnace.getInventory().setSmelting(furnaceBlock.getInventory().getSmelting());
-            if (furnaceBlock.getInventory().getResult() != null) customFurnace.getInventory().setResult(furnaceBlock.getInventory().getResult());
-            furnaceBlock.getInventory().setFuel(null);
-            furnaceBlock.getInventory().setSmelting(null);
-            furnaceBlock.getInventory().setResult(null);
+            loadFurnaceInventory(key, furnaceData, customFurnace, furnaceBlock.getInventory());
+            furnaceBlock.getInventory().clear();
         }
         customFurnaces.add(customFurnace);
         furnaceIDs.put(loc, SpinWheel.getInstance().getNextFurnaceID());
         furnace.setMetadata("superFurnace", new FixedMetadataValue(SpinWheel.getInstance(), furnaceData.getInt(key + TYPE)));
         loadedLocations.add(loc);
         SpinWheel.getInstance().incrementNextFurnaceID();
+    }
+
+    private static void loadFurnaceInventory(String key, FileConfiguration furnaceData, CustomFurnace customFurnace,
+                                             FurnaceInventory blockInventory) {
+        if (!furnaceData.getBoolean(key + INVENTORY_PERSISTED)) {
+            copyFurnaceInventory(blockInventory, customFurnace.getInventory());
+            return;
+        }
+
+        Optional.ofNullable(furnaceData.getItemStack(key + FUEL))
+                .ifPresent((ItemStack fuel) -> customFurnace.getInventory().setFuel(fuel));
+        Optional.ofNullable(furnaceData.getItemStack(key + SMELTING))
+                .ifPresent((ItemStack smelting) -> customFurnace.getInventory().setSmelting(smelting));
+        Optional.ofNullable(furnaceData.getItemStack(key + RESULT))
+                .ifPresent((ItemStack result) -> customFurnace.getInventory().setResult(result));
+    }
+
+    private static void copyFurnaceInventory(FurnaceInventory source, FurnaceInventory destination) {
+        Optional.ofNullable(source.getFuel()).ifPresent((ItemStack fuel) -> destination.setFuel(fuel));
+        Optional.ofNullable(source.getSmelting())
+                .ifPresent((ItemStack smelting) -> destination.setSmelting(smelting));
+        Optional.ofNullable(source.getResult()).ifPresent((ItemStack result) -> destination.setResult(result));
     }
 
     /**
@@ -275,6 +298,10 @@ public class FileUtils {
         String key = String.valueOf(id);
         furnaceData.set(key + LOCATION, location);
         furnaceData.set(key + TYPE, speed);
+        furnaceData.set(key + INVENTORY_PERSISTED, true);
+        furnaceData.set(key + FUEL, null);
+        furnaceData.set(key + SMELTING, null);
+        furnaceData.set(key + RESULT, null);
 
         furnaceData.save(furnaceFile);
         Bukkit.getLogger().log(Level.INFO, "[SpinWheel] Saved furnace with ID {0} at {1}", new Object[]{id, location});
@@ -308,8 +335,7 @@ public class FileUtils {
         ConfigurationSection section = furnaceData.getConfigurationSection("");
         if (section != null) {
             for (String key : section.getKeys(false)) {
-                furnaceData.set(key + LOCATION, null);
-                furnaceData.set(key + TYPE, null);
+                furnaceData.set(key, null);
             }
         }
 
@@ -325,14 +351,10 @@ public class FileUtils {
     private static int saveFurnaceAndState(CustomFurnace furnace, int num, FileConfiguration furnaceData) {
         furnaceData.set(num + LOCATION, furnace.getLocation());
         furnaceData.set(num + TYPE, furnace.getSpeed());
-        Block furnaceBlock = furnace.getLocation().getBlock();
-        BlockState state = furnaceBlock.getState();
-        if (state instanceof Furnace block) {
-            FurnaceInventory inv = block.getInventory();
-            if (furnace.getFuel() != null) inv.setFuel(furnace.getFuel());
-            if (furnace.getSmelting() != null) inv.setSmelting(furnace.getSmelting());
-            if (furnace.getResult() != null) inv.setResult(furnace.getResult());
-        }
+        furnaceData.set(num + INVENTORY_PERSISTED, true);
+        furnaceData.set(num + FUEL, furnace.getFuel());
+        furnaceData.set(num + SMELTING, furnace.getSmelting());
+        furnaceData.set(num + RESULT, furnace.getResult());
         num++;
         return num;
     }

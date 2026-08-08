@@ -40,7 +40,7 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <outputFile>C:\Users\dylan\Desktop\Games\myPlugins\SpinWheel.jar</outputFile>
+                            <outputFile>C:\Users\dylan\Desktop\Coding\Plugin Testing Server\plugins\SpinWheel.jar</outputFile>
                         </configuration>
                     </execution>
                 </executions>
