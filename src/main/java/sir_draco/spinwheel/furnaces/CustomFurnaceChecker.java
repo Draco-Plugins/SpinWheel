@@ -33,54 +33,52 @@ public class CustomFurnaceChecker extends BukkitRunnable {
     public void run() {
         if (plugin.getCustomFurnaces().isEmpty()) return;
         for (CustomFurnace furnace : plugin.getCustomFurnaces()) {
-            if (furnace.getSmelting() == null || furnace.getSmelting().getType().isAir()) continue;
-            furnace.tickFurnace();
+            ItemStack smelting = furnace.getSmelting();
+            if (smelting != null && !smelting.getType().isAir()) {
+                furnace.tickFurnace();
+            }
 
-            // Check for hopper output after furnace ticking
+            // Check after ticking so newly completed output can drain immediately.
             checkForHopperOutput(furnace);
         }
     }
 
     private void checkForHopperOutput(CustomFurnace furnace) {
+        ItemStack result = furnace.getResult();
+        ItemStack fuel = furnace.getFuel();
+        boolean hasResult = result != null && !result.getType().isAir() && result.getAmount() > 0;
+        boolean hasBucket = fuel != null && fuel.getType().equals(Material.BUCKET) && fuel.getAmount() > 0;
+        if (!hasResult && !hasBucket) return;
+
         // Look for a hopper below the furnace
         Location hopperLocation = furnace.getLocation().clone().add(0, -1, 0);
         Block hopperBlock = hopperLocation.getBlock();
 
-        if (hopperBlock.getType() == Material.HOPPER &&
-            hopperBlock.getState() instanceof Hopper hopper) {
+        if (!hopperBlock.getType().equals(Material.HOPPER) ||
+            !(hopperBlock.getState() instanceof Hopper hopper)) return;
 
-            // Get the furnace block state to use as the event source
-            Block furnaceBlock = furnace.getLocation().getBlock();
-            if (furnaceBlock.getState() instanceof org.bukkit.block.Furnace furnaceState) {
+        // The block-backed inventory is required as the InventoryMoveItemEvent source.
+        Block furnaceBlock = furnace.getLocation().getBlock();
+        if (!(furnaceBlock.getState() instanceof Furnace furnaceState)) return;
 
-                // Check for result items to output
-                if (furnace.getResult() != null && furnace.getResult().getAmount() > 0) {
-                    // Create an ItemStack representing what we want to move (1 item from result)
-                    ItemStack resultItem = furnace.getResult().clone();
-                    resultItem.setAmount(1);
+        if (hasResult) {
+            ItemStack resultItem = result.clone();
+            resultItem.setAmount(1);
+            callMoveItemEvent(hopper, furnaceState, resultItem);
+        }
 
-                    // Create and call a fake InventoryMoveItemEvent using the furnace block's inventory
-                    callMoveItemEvent(hopper, furnaceState, resultItem);
-                }
-
-                // Check for empty buckets in fuel slot to output
-                ItemStack fuel = furnace.getFuel();
-                if (fuel != null && fuel.getType() == Material.BUCKET) {
-                    // Create an ItemStack representing the bucket to move
-                    ItemStack bucketItem = new ItemStack(Material.BUCKET, 1);
-
-                    // Create and call a fake InventoryMoveItemEvent for the bucket
-                    callMoveItemEvent(hopper, furnaceState, bucketItem);
-                }
-            }
+        ItemStack currentFuel = furnace.getFuel();
+        if (currentFuel != null && currentFuel.getType().equals(Material.BUCKET) && currentFuel.getAmount() > 0) {
+            ItemStack bucketItem = new ItemStack(Material.BUCKET, 1);
+            callMoveItemEvent(hopper, furnaceState, bucketItem);
         }
     }
 
-    private void callMoveItemEvent(Hopper hopper, Furnace furnaceState, ItemStack bucketItem) {
+    private void callMoveItemEvent(Hopper hopper, Furnace furnaceState, ItemStack item) {
         InventoryMoveItemEvent fakeEvent =
             new InventoryMoveItemEvent(
                 furnaceState.getInventory(),  // source (furnace block's inventory)
-                    bucketItem,                   // item being moved (bucket)
+                item,                         // item being moved
                 hopper.getInventory(),        // destination
                 true                          // whether items can be taken
             );
